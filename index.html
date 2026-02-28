@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rise of the Johnsons</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+<div class="iphone-frame">
+  <div class="dynamic-island"></div>
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <div class="status-time" id="status-time">9:41</div>
+    <div class="status-icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div>
+  </div>
+
+  <!-- ── LOGIN SCREEN ── -->
+  <div id="login-screen">
+    <div class="login-logo">J</div>
+    <div class="login-title">RISE of the<br>JOHNSONS</div>
+    <div class="login-subtitle">Choose your profile to continue</div>
+
+    <!-- Step 1: Pick member -->
+    <div id="login-step-1" style="width:100%;">
+      <span class="login-label">Who are you?</span>
+      <div class="member-grid" id="member-grid"></div>
+    </div>
+
+    <!-- Step 2: PIN entry -->
+    <div id="login-step-2" style="display:none;width:100%;">
+      <div class="pin-member-name" id="pin-member-name"></div>
+      <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:4px;">Enter your PIN</div>
+      <div class="pin-dots" id="pin-dots">
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+      </div>
+      <div class="pin-error" id="pin-error"></div>
+      <div class="pin-pad" id="pin-pad"></div>
+      <button class="btn-back-login" onclick="showLoginStep1()">← Back</button>
+    </div>
+  </div>
+
+  <!-- ── APP SHELL (shown after login) ── -->
+  <div class="app-shell" id="app-shell" style="display:none;">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="logo">J</div>
+        <div class="topbar-title" id="page-title">Dashboard</div>
+      </div>
+      <div class="topbar-right">
+        <div class="logged-in-chip" onclick="logout()" id="user-chip">
+          <div class="logged-in-dot" id="user-dot"></div>
+          <span id="user-name-chip">Dad</span>
+          <span style="opacity:0.4;font-size:10px;">↩</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MAIN CONTENT ── -->
+    <div class="main">
+
+      <!-- DASHBOARD PAGE -->
+      <div class="content active" id="page-dashboard">
+        <div class="dash-toggle">
+          <button class="dash-tab active" id="tab-family" onclick="switchDash('family')">👨‍👩‍👧‍👦 Family</button>
+          <button class="dash-tab" id="tab-personal" onclick="switchDash('personal')">👤 Personal</button>
+        </div>
+
+        <!-- FAMILY VIEW -->
+        <div id="view-family">
+          <div class="hero-banner">
+            <div class="hero-text">
+              <h2>RISE of the JOHNSONS ⚔️</h2>
+              <p>Together stronger · Every day counts</p>
+            </div>
+            <!-- Streak Box -->
+            <div style="flex-shrink:0;background:rgba(20,12,0,0.4);border:2px solid rgba(255,120,0,0.8);border-radius:16px;padding:16px 20px;text-align:center;min-width:90px;box-shadow:0 0 18px rgba(255,100,0,0.5),0 0 40px rgba(255,80,0,0.2),inset 0 0 16px rgba(255,100,0,0.07);">
+              <div style="font-size:34px;line-height:1;margin-bottom:6px;filter:drop-shadow(0 0 10px rgba(255,140,0,0.9));">🔥</div>
+              <div style="font-family:'Lexend',sans-serif;font-size:40px;font-weight:800;color:#FFD700;line-height:1;margin-bottom:4px;text-shadow:0 0 16px rgba(255,200,0,0.5);">7</div>
+              <div style="font-size:10px;font-weight:500;letter-spacing:0.8px;color:rgba(255,180,80,0.75);text-transform:lowercase;">day streak</div>
+            </div>
+          </div>
+
+          <!-- Leaderboard -->
+          <div class="card" style="margin-bottom:14px;">
+            <div class="section-title">🏅 Family Leaderboard</div>
+            <div id="leaderboard"></div>
+          </div>
+
+          <!-- Recent Badges -->
+          <div class="card" style="margin-bottom:14px;">
+            <div class="section-title">🎖️ Recent Badges</div>
+            <div id="badges-display"></div>
+          </div>
+
+          <!-- Motto -->
+          <div class="motto-bar">
+            <strong>"Through trial and pain,</strong> the Johnson's will reign!"
+          </div>
+        </div>
+
+        <!-- PERSONAL VIEW -->
+        <div id="view-personal" style="display:none;">
+          <div class="member-tabs" id="personal-member-tabs"></div>
+          <div id="personal-hero" style="margin-bottom:14px;"></div>
+          <div id="personal-stats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;"></div>
+          <div style="margin-bottom:12px;">
+            <div class="card"><div class="section-title">🔥 Active Streaks</div><div id="personal-streaks"></div></div>
+          </div>
+          <div style="margin-bottom:12px;">
+            <div class="card"><div class="section-title">📊 Category Breakdown</div><div id="personal-categories"></div></div>
+          </div>
+          <div class="card" style="margin-bottom:12px;">
+            <div class="section-title">🎯 Goals Today</div>
+            <div id="personal-goals"></div>
+          </div>
+          <div class="card">
+            <div class="section-title">🎖️ Badges</div>
+            <div id="personal-badges"></div>
+          </div>
+        </div>
+      </div><!-- end page-dashboard -->
+
+      <!-- MY PLAN PAGE -->
+      <div class="content" id="page-tracker">
+        <div class="member-tabs" id="plan-member-tabs" style="margin-bottom:10px;"></div>
+        <div style="margin-bottom:10px;font-size:11px;color:var(--muted);" id="tracker-summary"></div>
+        <div class="category-tabs">
+          <div class="cat-tab active" onclick="filterCat(this,'all')">All</div>
+          <div class="cat-tab" onclick="filterCat(this,'fitness')">💪 Fitness</div>
+          <div class="cat-tab" onclick="filterCat(this,'finance')">💰 Finance</div>
+          <div class="cat-tab" onclick="filterCat(this,'spiritual')">🙏 Spiritual</div>
+        </div>
+        <div id="goal-list"></div>
+      </div>
+
+      <!-- ADD GOAL PAGE -->
+      <div class="content" id="page-add">
+        <div id="add-lock-notice" class="locked-notice" style="display:none;"></div>
+        <div class="form-card">
+          <div class="section-title" style="margin-bottom:16px;">➕ Add a Goal</div>
+          <div class="form-group">
+            <label class="form-label">Goal Name</label>
+            <input class="form-input" id="goal-name-input" placeholder="e.g. Walk 10,000 steps" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Quick Templates</label>
+            <div class="template-grid">
+              <div class="template-chip" onclick="useTemplate('Walk 10,000 steps','fitness')">🚶 Walk 10K Steps</div>
+              <div class="template-chip" onclick="useTemplate('Morning prayer','spiritual')">🙏 Morning Prayer</div>
+              <div class="template-chip" onclick="useTemplate('Save $10 today','finance')">💰 Save $10</div>
+              <div class="template-chip" onclick="useTemplate('Read Bible','spiritual')">📖 Read Bible</div>
+              <div class="template-chip" onclick="useTemplate('No junk food','fitness')">🥗 No Junk Food</div>
+              <div class="template-chip" onclick="useTemplate('Track spending','finance')">📊 Track Spending</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Category</label>
+            <div class="radio-group">
+              <div class="radio-option selected" id="cat-fitness" onclick="selectCat('fitness')"><span class="option-icon">💪</span>Fitness</div>
+              <div class="radio-option" id="cat-finance" onclick="selectCat('finance')"><span class="option-icon">💰</span>Finance</div>
+              <div class="radio-option" id="cat-spiritual" onclick="selectCat('spiritual')"><span class="option-icon">🙏</span>Spiritual</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Frequency</label>
+            <div class="radio-group">
+              <div class="radio-option selected" id="freq-daily" onclick="selectFreq('daily')"><span class="option-icon">📅</span>Daily</div>
+              <div class="radio-option" id="freq-weekly" onclick="selectFreq('weekly')"><span class="option-icon">📆</span>Weekly</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Assign To</label>
+            <div class="member-select" id="member-assign"></div>
+          </div>
+          <button class="btn-primary" onclick="saveGoal()">Save Goal 🎯</button>
+        </div>
+      </div>
+
+      <!-- HISTORY PAGE -->
+      <div class="content" id="page-history">
+        <div class="card" style="margin-bottom:18px;">
+          <div style="text-align:center;margin-bottom:14px;">
+            <div id="cal-month-label" style="font-family:'Lexend',sans-serif;font-size:20px;font-weight:600;margin-bottom:4px;"></div>
+            <div style="display:flex;justify-content:center;gap:7px;" id="cal-summary-pills"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px;">
+            <div style="text-align:center;font-size:9px;font-weight:700;color:var(--muted);">S</div>
+            <div style="text-align:center;font-size:9px;font-weight:700;color:var(--muted);">M</div>
+            <div style="text-align:center;font-size:9px;font-weight:700;color:var(--muted);">T</div>
+            <div style="text-align:center;font-size:9px;font-weight:700;color:var(--muted);">W</div>
+            <div style="text-align:center;font-size:9px;font-weight:700;color:var(--muted);">T</div>
+            <div style="text-align:center;font-size:9px;font-weight:700;color:var(--muted);">F</div>
+            <div style="text-align:center;font-size:9px;font-weight:700;color:var(--muted);">S</div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;" id="calendar-grid"></div>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:10px;color:var(--muted);flex-wrap:wrap;">
+            <span style="display:flex;align-items:center;gap:4px;"><span style="width:11px;height:11px;border-radius:2px;background:#22C55E;display:inline-block;"></span>Complete</span>
+            <span style="display:flex;align-items:center;gap:4px;"><span style="width:11px;height:11px;border-radius:2px;background:rgba(34,197,94,0.3);display:inline-block;"></span>Partial</span>
+            <span style="display:flex;align-items:center;gap:4px;"><span style="width:11px;height:11px;border-radius:2px;background:rgba(224,92,58,0.25);display:inline-block;"></span>Missed</span>
+            <span style="display:flex;align-items:center;gap:4px;margin-left:auto;"><span style="width:11px;height:11px;border-radius:2px;border:2px solid var(--gold);display:inline-block;"></span>Today</span>
+          </div>
+        </div>
+        <div class="section-title">📝 Recent Activity</div>
+        <div id="history-log"></div>
+      </div>
+
+      <!-- PROFILE PAGE -->
+      <div class="content" id="page-reminders">
+
+        <!-- Profile Header -->
+        <div id="profile-header" class="card" style="margin-bottom:14px;text-align:center;padding:20px 16px;">
+          <div id="profile-trophy-icon" style="font-size:48px;margin-bottom:6px;filter:drop-shadow(0 0 12px rgba(180,80,255,0.6));"></div>
+          <div id="profile-name" style="font-size:20px;font-weight:800;margin-bottom:2px;"></div>
+          <div id="profile-level-name" style="font-size:12px;color:var(--muted);margin-bottom:2px;"></div>
+          <div id="profile-streak-line" style="font-size:11px;color:var(--gold);font-weight:600;"></div>
+        </div>
+
+        <!-- Accordion Sections -->
+        <div style="display:flex;flex-direction:column;gap:10px;">
+
+          <!-- Trophy Road -->
+          <div class="card" style="padding:0;overflow:hidden;">
+            <button onclick="toggleSection('trophy-road')" style="width:100%;background:none;border:none;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;color:var(--text);font-family:'Lexend',sans-serif;font-size:14px;font-weight:700;">
+              <span>🏆 Trophy Road</span>
+              <span id="trophy-road-arrow" style="transition:transform 0.2s;font-size:12px;color:var(--muted);">▼</span>
+            </button>
+            <div id="trophy-road" style="display:none;padding:0 0 16px;">
+              <div id="trophy-road-content"></div>
+            </div>
+          </div>
+
+          <!-- Reminders -->
+          <div class="card" style="padding:0;overflow:hidden;">
+            <button onclick="toggleSection('reminders-section')" style="width:100%;background:none;border:none;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;color:var(--text);font-family:'Lexend',sans-serif;font-size:14px;font-weight:700;">
+              <span>🔔 Reminders</span>
+              <span id="reminders-section-arrow" style="transition:transform 0.2s;font-size:12px;color:var(--muted);">▼</span>
+            </button>
+            <div id="reminders-section" style="display:none;padding:0 18px 16px;">
+              <div id="reminder-rows"></div>
+            </div>
+          </div>
+
+          <!-- Notifications -->
+          <div class="card" style="padding:0;overflow:hidden;">
+            <button onclick="toggleSection('notif-section')" style="width:100%;background:none;border:none;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;color:var(--text);font-family:'Lexend',sans-serif;font-size:14px;font-weight:700;">
+              <span>📬 Notifications</span>
+              <span id="notif-section-arrow" style="transition:transform 0.2s;font-size:12px;color:var(--muted);">▼</span>
+            </button>
+            <div id="notif-section" style="display:none;padding:0 18px 16px;">
+              <div id="notif-list"></div>
+            </div>
+          </div>
+
+        </div>
+      </div><!-- end page-reminders/profile -->
+
+    </div><!-- end .main -->
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+      <button class="nav-item active" onclick="showPage('dashboard')"><span class="nav-icon">🏠</span>Dashboard</button>
+      <button class="nav-item" onclick="showPage('tracker')"><span class="nav-icon">📋</span>My Plan</button>
+      <button class="nav-item-add" id="nav-add" onclick="showPage('add')">
+        <div class="nav-add-circle">+</div>
+        <span>Add</span>
+      </button>
+      <button class="nav-item" onclick="showPage('history')"><span class="nav-icon">📅</span>History</button>
+      <button class="nav-item" onclick="showPage('reminders')"><span class="nav-icon">👤</span>Profile</button>
+    </nav>
+
+    <!-- Celebration Modal -->
+    <div class="modal-overlay" id="modal">
+      <div class="modal">
+        <span class="modal-emoji" id="modal-emoji">🎉</span>
+        <div class="modal-title" id="modal-title">Goal Complete!</div>
+        <div class="modal-body" id="modal-body">Amazing work!</div>
+        <button class="btn-close" onclick="closeModal()">Awesome! 🙌</button>
+      </div>
+    </div>
+
+  </div><!-- end app-shell -->
+  <div class="home-indicator"></div>
+</div><!-- end iphone-frame -->
+
+<script src="./app.js"></script>
+</body>
+</html>
