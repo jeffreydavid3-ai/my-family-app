@@ -9,6 +9,16 @@ const supabaseClient =
 
 console.log("Supabase client:", supabaseClient ? "✅ ready" : "❌ not loaded");
 
+function logSupabaseError(label, error) {
+  if (!error) return;
+  console.error(
+    `[Supabase] ${label}:`,
+    error.message || error,
+    error.details || "",
+    error.hint || ""
+  );
+}
+
 // ── SUPABASE: LOAD + SAVE GOALS ──
 async function loadGoalsFromSupabase() {
   if (!supabaseClient) return;
@@ -18,10 +28,10 @@ async function loadGoalsFromSupabase() {
     .select("*")
     .order("created_at", { ascending: true });
 
-  if (error) {
-    console.error("Load goals error:", error);
-    return;
-  }
+if (error) {
+  logSupabaseError("Load goals", error);
+  return;
+}
 
   goals = (data || []).map(row => ({
     id: row.id,
@@ -64,6 +74,8 @@ async function insertGoalToSupabase(goal) {
 }
 
 async function updateGoalInSupabase(goal) {
+  if (!supabaseClient) return;
+
   const { error } = await supabaseClient
     .from("goals")
     .update({
@@ -73,12 +85,8 @@ async function updateGoalInSupabase(goal) {
     .eq("id", goal.id);
 
   if (error) {
-  console.error(
-    "Update goal error:",
-    error.message,
-    error.details,
-    error.hint
-  );
+    logSupabaseError("Update goal", error);
+  }
 }
 
 // ── MEMBER DATA ──
@@ -291,35 +299,6 @@ const leaderboardData = [
   { name:'Berrett', score:78, streak:4 },
   { name:'Jaxon', score:72, streak:3 },
 ];
-
-// ── SUPABASE GOAL LOADER ──
-async function loadGoalsFromSupabase() {
-  if (!supabaseClient) return;
-
-  const { data, error } = await supabaseClient
-    .from("goals")
-    .select("*")
-    .order("created_at", { ascending: true });
-
-  if (error) {
-  console.error(
-    "Update goal error:",
-    error.message,
-    error.details,
-    error.hint
-  );
-}
-
-  goals = (data || []).map(row => ({
-    id: row.id,
-    name: row.title,
-    member: row.member,
-    done: row.completed,
-    cat: row.cat || "fitness",
-    freq: row.freq || "daily",
-    streak: row.streak || 0
-  }));
-}
 
 const badges = [
   { icon:'🔥', label:'7-Day Streak', who:'Family', bg:'rgba(233,168,37,0.15)', isNew:true },
