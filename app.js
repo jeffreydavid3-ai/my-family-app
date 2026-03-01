@@ -1,3 +1,14 @@
+// ── SUPABASE SETUP ──
+const SUPABASE_URL = "https://cebjungpkpmfovadwkis.supabase.co";
+const SUPABASE_KEY = "sb_publishable_M3cUwzEORiuAsuymFWIliQ_kqDH7nQZ";
+
+const supabase = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+console.log("Supabase initialized ✅");
+
 // ── MEMBER DATA ──
 const members = {
   Dad:     { pin:'1234', emoji:'👨', color:'#4A90D9', role:'Father' },
