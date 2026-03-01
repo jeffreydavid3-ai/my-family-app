@@ -51,9 +51,14 @@ async function insertGoalToSupabase(goal) {
     .single();
 
   if (error) {
-    console.error("Insert goal error:", error);
-    return null;
-  }
+  console.error(
+    "Insert goal error:",
+    error.message,
+    error.details,
+    error.hint
+  );
+  return null;
+}
 
   return data;
 }
@@ -67,7 +72,13 @@ async function updateGoalInSupabase(goal) {
     })
     .eq("id", goal.id);
 
-  if (error) console.error("Update goal error:", error);
+  if (error) {
+  console.error(
+    "Update goal error:",
+    error.message,
+    error.details,
+    error.hint
+  );
 }
 
 // ── MEMBER DATA ──
@@ -291,9 +302,13 @@ async function loadGoalsFromSupabase() {
     .order("created_at", { ascending: true });
 
   if (error) {
-    console.error("Load goals error:", error);
-    return;
-  }
+  console.error(
+    "Update goal error:",
+    error.message,
+    error.details,
+    error.hint
+  );
+}
 
   goals = (data || []).map(row => ({
     id: row.id,
