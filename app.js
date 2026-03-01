@@ -275,14 +275,12 @@ const personalCats = {
   Jaxon:   { fitness:50, finance:70, spiritual:80 },
 };
 
-let currentCatFilter = 'all';
-let selectedCat = 'fitness';
-let selectedFreq = 'daily';
+let currentCatFilter = 'all', selectedCat = 'fitness', selectedFreq = 'daily';
 
-let selectedMembers = new Set(['All']);   // used by Add Goal
-let selectedMember = 'Dad';              // used by Personal Dashboard
+let selectedMembers = new Set(['All']);   // used on Add Goal screen
+let selectedMember = 'Dad';              // used on Personal Dashboard tabs
 
-let planViewMember = null;               // set to loggedInUser on login
+let planViewMember = null;               // used on My Plan view
 
 // ── INIT ──
 async function initApp() {
@@ -596,7 +594,7 @@ function renderTrophyRoad(streak, currentLevel) {
   // Build the Clash Royale-style stacked steps path
   // Each level = 7 steps (days). Steps go 1–7 for each level.
   const html = trophyLevels.slice().reverse().map((lvl, revIdx) => {
-    const lvlNum = 7 - revIdx; // actual level number (7 down to 1)
+    const lvlNum = trophyLevels.length - revIdx; // ✅ 8 down to 1
     const realLvl = trophyLevels[lvlNum - 1];
     const levelStartDay = (lvlNum - 1) * 7;
     const isCurrentLevel = lvlNum === currentLevel;
