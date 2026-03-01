@@ -542,11 +542,11 @@ function renderHistory(){
 
 function renderProfile() {
   if (!loggedInUser) return;
-  const m = members[loggedInUser];
-  const d = personalData[loggedInUser];
 
-  // Calculate current level from streak
-  const streak = d.streak;
+  const m = getMember(loggedInUser);
+  const d = personalData[loggedInUser] || { streak: 0 };
+  const streak = d.streak || 0;
+
   const currentLevel = Math.min(Math.floor(streak / 7) + 1, 8);
   const levelInfo = trophyLevels[currentLevel - 1];
 
