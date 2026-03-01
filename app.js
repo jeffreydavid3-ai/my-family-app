@@ -17,6 +17,15 @@ const members = {
   Berrett: { pin:'4567', emoji:'🧒', color:'#E9A825', role:'Son' },
   Jaxon:   { pin:'5678', emoji:'👦', color:'#9B59B6', role:'Son' },
 };
+function getMember(name) {
+  const key = (name || "").trim();         // removes extra spaces
+  return members[key] || {                 // fallback if name not found
+    pin: "",
+    emoji: "🙂",
+    color: "#4A90D9",
+    role: ""
+  };
+}
 
 let loggedInUser = null;
 let pinBuffer = '';
@@ -123,7 +132,7 @@ function showPinEntry(name) {
   pinBuffer = '';
   updatePinDots();
   document.getElementById('pin-error').textContent = '';
-  document.getElementById('pin-member-name').textContent = `${members[name].emoji} ${name}`;
+  document.getElementById('pin-member-name').textContent = `${getMember(name).emoji} ${name}`;
   document.getElementById('login-step-1').style.display = 'none';
   document.getElementById('login-step-2').style.display = 'block';
 }
@@ -131,21 +140,29 @@ function showPinEntry(name) {
 function showLoginStep1() {
   document.getElementById('login-step-1').style.display = 'block';
   document.getElementById('login-step-2').style.display = 'none';
-  pinBuffer = ''; updatePinDots();
+  pinBuffer = '';
+  updatePinDots();
 }
 
 function pinPress(key) {
-  if (key === '⌫' || key === '') { pinBuffer = pinBuffer.slice(0,-1); updatePinDots(); return; }
+  if (key === '⌫' || key === '') {
+    pinBuffer = pinBuffer.slice(0,-1);
+    updatePinDots();
+    return;
+  }
   if (pinBuffer.length >= 4) return;
+
   pinBuffer += key;
   updatePinDots();
+
   if (pinBuffer.length === 4) {
     setTimeout(() => {
-      if (pinBuffer === members[pinTarget].pin) {
+      if (pinBuffer === getMember(pinTarget).pin) {
         loginAs(pinTarget);
       } else {
         document.getElementById('pin-error').textContent = 'Incorrect PIN. Try again.';
-        pinBuffer = ''; updatePinDots();
+        pinBuffer = '';
+        updatePinDots();
       }
     }, 150);
   }
@@ -160,13 +177,16 @@ function updatePinDots() {
 function loginAs(name) {
   loggedInUser = name;
   planViewMember = name;
-  const m = members[name];
+
+  const m = getMember(name);
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app-shell').style.display = 'flex';
   document.getElementById('user-name-chip').textContent = name;
   document.getElementById('user-dot').style.background = m.color;
-  // set personal view to logged-in user
+
+  // Personal dashboard default
   selectedMember = name;
+
   initApp();
 }
 
@@ -180,16 +200,16 @@ function logout() {
 
 // ── APP DATA ──
 let goals = [
-  { id:1, name:'Walk 10,000 steps', cat:'fitness', freq:'daily', member:'Dad', done:true, streak:5 },
-  { id:2, name:'Morning Prayer', cat:'spiritual', freq:'daily', member:'All', done:true, streak:7 },
-  { id:3, name:'No Junk Food', cat:'fitness', freq:'daily', member:'Mom', done:false, streak:3 },
-  { id:4, name:'Track Spending', cat:'finance', freq:'daily', member:'All', done:false, streak:2 },
-  { id:5, name:'Read Bible', cat:'spiritual', freq:'daily', member:'Zach', done:true, streak:4 },
-  { id:6, name:'Save $10 Today', cat:'finance', freq:'daily', member:'Mom', done:true, streak:6 },
-  { id:7, name:'Exercise 30 min', cat:'fitness', freq:'daily', member:'Berrett', done:false, streak:1 },
-  { id:8, name:'Gratitude Journal', cat:'spiritual', freq:'daily', member:'Jaxon', done:false, streak:0 },
-  { id:9, name:'No impulse buys', cat:'finance', freq:'daily', member:'Dad', done:true, streak:8 },
-  { id:10, name:'Family devotion', cat:'spiritual', freq:'daily', member:'All', done:true, streak:7 },
+  { id:1,  name:'Walk 10,000 steps',   cat:'fitness',  freq:'daily', member:'Dad',     done:true,  streak:5 },
+  { id:2,  name:'Morning Prayer',      cat:'spiritual',freq:'daily', member:'All',     done:true,  streak:7 },
+  { id:3,  name:'No Junk Food',        cat:'fitness',  freq:'daily', member:'Mom',     done:false, streak:3 },
+  { id:4,  name:'Track Spending',      cat:'finance',  freq:'daily', member:'All',     done:false, streak:2 },
+  { id:5,  name:'Read Bible',          cat:'spiritual',freq:'daily', member:'Zach',    done:true,  streak:4 },
+  { id:6,  name:'Save $10 Today',      cat:'finance',  freq:'daily', member:'Mom',     done:true,  streak:6 },
+  { id:7,  name:'Exercise 30 min',     cat:'fitness',  freq:'daily', member:'Berrett', done:false, streak:1 },
+  { id:8,  name:'Gratitude Journal',   cat:'spiritual',freq:'daily', member:'Jaxon',   done:false, streak:0 },
+  { id:9,  name:'No impulse buys',     cat:'finance',  freq:'daily', member:'Dad',     done:true,  streak:8 },
+  { id:10, name:'Family devotion',     cat:'spiritual',freq:'daily', member:'All',     done:true,  streak:7 },
 ];
 
 const leaderboardData = [
@@ -225,9 +245,14 @@ const personalCats = {
   Jaxon:   { fitness:50, finance:70, spiritual:80 },
 };
 
-let currentCatFilter='all', selectedCat='fitness', selectedFreq='daily';
-let selectedMembers=new Set(['All']), selectedMember='Dad';
-let planViewMember = null; // set to loggedInUser on login
+let currentCatFilter = 'all';
+let selectedCat = 'fitness';
+let selectedFreq = 'daily';
+
+let selectedMembers = new Set(['All']);   // used by Add Goal
+let selectedMember = 'Dad';              // used by Personal Dashboard
+
+let planViewMember = null;               // set to loggedInUser on login
 
 // ── INIT ──
 function initApp() {
@@ -247,12 +272,15 @@ function initApp() {
 
 function renderPlanMemberTabs() {
   const memberNames = Object.keys(members);
-  document.getElementById('plan-member-tabs').innerHTML = memberNames.map(m => `
-    <button class="member-tab ${m===planViewMember?'active':''}" onclick="selectPlanMember('${m}')"
-      style="${m===planViewMember?`background:${members[m].color};border-color:transparent;`:''}">
-      ${members[m].emoji} ${m}
-    </button>
-  `).join('');
+  document.getElementById('plan-member-tabs').innerHTML = memberNames.map(m => {
+    const mm = getMember(m);
+    return `
+      <button class="member-tab ${m===planViewMember?'active':''}" onclick="selectPlanMember('${m}')"
+        style="${m===planViewMember?`background:${mm.color};border-color:transparent;`:''}">
+        ${mm.emoji} ${m}
+      </button>
+    `;
+  }).join('');
 }
 
 function selectPlanMember(m) {
@@ -400,7 +428,9 @@ function renderTracker(){
 
 function showLockedMsg(){ showModal('🔒','Not Your Goal',"You can only check off your own goals."); }
 
-function memberColor(m){ return members[m]?members[m].color:'#7A90B8'; }
+function memberColor(m){
+  return getMember(m).color;
+}
 
 function toggleGoal(id){
   const g=goals.find(g=>g.id===id); if(!g) return;
@@ -423,11 +453,11 @@ function renderAddForm(){
 
   // Member assign chips — only show logged-in user + All
   const allowed=['All',loggedInUser];
-  document.getElementById('member-assign').innerHTML=allowed.map(m=>`
-    <div class="member-chip ${m==='All'?'selected':''}" data-member="${m}" onclick="toggleMember(this)">
-      ${m==='All'?'👨‍👩‍👧‍👦 All':`${members[m]?members[m].emoji:''} ${m}`}
-    </div>
-  `).join('');
+document.getElementById('member-assign').innerHTML = allowed.map(m=>`
+  <div class="member-chip ${m==='All'?'selected':''}" data-member="${m}" onclick="toggleMember(this)">
+    ${m==='All' ? '👪 All' : `${getMember(m).emoji} ${m}`}
+  </div>
+`).join('');
 }
 
 function selectCat(cat){selectedCat=cat;['fitness','finance','spiritual'].forEach(c=>document.getElementById('cat-'+c).classList.remove('selected'));document.getElementById('cat-'+cat).classList.add('selected');}
@@ -645,8 +675,8 @@ function renderPersonalDashboard(){
   const memberNames=Object.keys(members);
   document.getElementById('personal-member-tabs').innerHTML=memberNames.map(m=>`
     <button class="member-tab ${m===selectedMember?'active':''}" onclick="selectPersonalMember('${m}')"
-      style="${m===selectedMember?`background:${members[m].color};border-color:transparent;`:''}">
-      ${members[m].emoji} ${m}
+      style="${m===selectedMember?`background:${getMember(m).color};border-color:transparent;`:''}">
+      ${getMember(m).emoji} ${m}
     </button>
   `).join('');
 
