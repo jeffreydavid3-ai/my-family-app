@@ -10,6 +10,65 @@ if (window.supabase && typeof window.supabase.createClient === "function") {
     SUPABASE_KEY
   );
   console.log("Supabase initialized ✅");
+  // ── SUPABASE: LOAD + SAVE GOALS ──
+async function loadGoalsFromSupabase() {
+  if (!supabaseClient) return;
+
+  const { data, error } = await supabaseClient
+    .from("goals")
+    .select("*")
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("Load goals error:", error);
+    return;
+  }
+
+  goals = (data || []).map(row => ({
+    id: row.id,
+    name: row.title,
+    member: row.member,
+    done: row.completed,
+    cat: row.cat || "fitness",
+    freq: row.freq || "daily",
+    streak: row.streak || 0
+  }));
+}
+
+async function insertGoalToSupabase(goal) {
+  const { data, error } = await supabaseClient
+    .from("goals")
+    .insert([{
+      title: goal.name,
+      member: goal.member,
+      completed: goal.done,
+      cat: goal.cat,
+      freq: goal.freq,
+      streak: goal.streak
+    }])
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Insert goal error:", error);
+    return null;
+  }
+
+  return data; // row including generated id
+}
+
+async function updateGoalInSupabase(goal) {
+  const { error } = await supabaseClient
+    .from("goals")
+    .update({
+      completed: goal.done,
+      streak: goal.streak
+    })
+    .eq("id", goal.id);
+
+  if (error) console.error("Update goal error:", error);
+}
+  
 } else {
   console.warn("Supabase NOT loaded — running without database ⚠️");
 }
@@ -284,10 +343,7 @@ let planViewMember = null;               // used on My Plan view
 
 // ── INIT ──
 async function initApp() {
-
-  // ✅ LOAD GOALS FROM SUPABASE FIRST
   await loadGoalsFromSupabase();
-
   planViewMember = loggedInUser;
   renderLeaderboard();
   renderBadges();
@@ -464,10 +520,16 @@ function memberColor(m){
   return getMember(m).color;
 }
 
-function toggleGoal(id){
-  const g=goals.find(g=>g.id===id); if(!g) return;
-  g.done=!g.done;
-  if(g.done){g.streak++;checkCelebration(g);}else{g.streak=Math.max(0,g.streak-1);}
+async function toggleGoal(id){
+  const g = goals.find(g=> String(g.id) === String(id));
+  if(!g) return;
+
+  g.done = !g.done;
+  if(g.done){ g.streak++; checkCelebration(g); }
+  else { g.streak = Math.max(0, g.streak-1); }
+
+  await updateGoalInSupabase(g);
+
   renderTracker();
 }
 
@@ -501,14 +563,38 @@ function toggleMember(el){
   selectedMembers=new Set([m]);
 }
 function useTemplate(name,cat){document.getElementById('goal-name-input').value=name;selectCat(cat);}
-function saveGoal(){
-  const name=document.getElementById('goal-name-input').value.trim();
-  if(!name){alert('Please enter a goal name!');return;}
-  const assignTo=[...selectedMembers][0]||loggedInUser;
-  goals.push({id:Date.now(),name,cat:selectedCat,freq:selectedFreq,member:assignTo,done:false,streak:0});
-  document.getElementById('goal-name-input').value='';
+async function saveGoal(){
+  const name = document.getElementById('goal-name-input').value.trim();
+  if(!name){ alert('Please enter a goal name!'); return; }
+
+  const assignTo = [...selectedMembers][0] || loggedInUser;
+
+  const newGoal = {
+    id: null,
+    name,
+    cat: selectedCat,
+    freq: selectedFreq,
+    member: assignTo,
+    done: false,
+    streak: 0
+  };
+
+  // Insert into Supabase first
+  const row = await insertGoalToSupabase(newGoal);
+  if (!row) {
+    alert("Could not save goal to Supabase. Check console.");
+    return;
+  }
+
+  // Use the real Supabase id
+  newGoal.id = row.id;
+
+  goals.push(newGoal);
+
+  document.getElementById('goal-name-input').value = '';
   showModal('🎯','Goal Added!',`"${name}" added to the tracker!`);
   showPage('tracker');
+  renderTracker();
 }
 
 // ── CALENDAR ──
