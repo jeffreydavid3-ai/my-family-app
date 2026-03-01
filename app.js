@@ -715,7 +715,9 @@ function renderPersonalDashboard(){
   `).join('');
 
   const d=personalData[selectedMember],cats=personalCats[selectedMember];
-  const color=members[selectedMember].color, emoji=members[selectedMember].emoji;
+const m = getMember(selectedMember);
+const color = m.color;
+const emoji = m.emoji;
   const rank=leaderboardData.findIndex(m=>m.name===selectedMember)+1;
   const rl=['🥇 #1','🥈 #2','🥉 #3','#4','#5'][rank-1];
 
