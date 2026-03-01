@@ -387,7 +387,7 @@ function renderTracker(){
   document.getElementById('goal-list').innerHTML=filtered.map(g=>{
     const canToggle = isViewingOwn; // only check off your own view
     return `
-      <div class="goal-card ${g.done?'completed':''}" onclick="${canToggle?`toggleGoal(${g.id})`:''}">
+      <div class="goal-card ${g.done?'completed':''}" onclick="${canToggle?`toggleGoal('${g.id}')`:''}">
         <div style="flex:1;">
           <div style="font-weight:600;font-size:13px;${g.done?'text-decoration:line-through;opacity:0.4;':''}">${g.name}</div>
           <div style="font-size:10px;color:var(--muted);margin-top:2px;">${ci[g.cat]} ${g.cat.charAt(0).toUpperCase()+g.cat.slice(1)}</div>
