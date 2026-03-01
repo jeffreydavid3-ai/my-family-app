@@ -225,6 +225,31 @@ const leaderboardData = [
   { name:'Jaxon', score:72, streak:3 },
 ];
 
+// ── SUPABASE GOAL LOADER ──
+async function loadGoalsFromSupabase() {
+  if (!supabaseClient) return;
+
+  const { data, error } = await supabaseClient
+    .from("goals")
+    .select("*")
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("Load goals error:", error);
+    return;
+  }
+
+  goals = (data || []).map(row => ({
+    id: row.id,
+    name: row.title,
+    member: row.member,
+    done: row.completed,
+    cat: row.cat || "fitness",
+    freq: row.freq || "daily",
+    streak: row.streak || 0
+  }));
+}
+
 const badges = [
   { icon:'🔥', label:'7-Day Streak', who:'Family', bg:'rgba(233,168,37,0.15)', isNew:true },
   { icon:'💪', label:'Fitness Week', who:'Dad', bg:'rgba(74,174,217,0.12)' },
@@ -260,7 +285,11 @@ let selectedMember = 'Dad';              // used by Personal Dashboard
 let planViewMember = null;               // set to loggedInUser on login
 
 // ── INIT ──
-function initApp() {
+async function initApp() {
+
+  // ✅ LOAD GOALS FROM SUPABASE FIRST
+  await loadGoalsFromSupabase();
+
   planViewMember = loggedInUser;
   renderLeaderboard();
   renderBadges();
