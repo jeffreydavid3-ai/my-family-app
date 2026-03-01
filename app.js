@@ -2,12 +2,17 @@
 const SUPABASE_URL = "https://cebjungpkpmfovadwkis.supabase.co";
 const SUPABASE_KEY = "sb_publishable_M3cUwzEORiuAsuymFWIliQ_kqDH7nQZ";
 
-const supabaseClient = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
+let supabaseClient = null;
 
-console.log("Supabase initialized ✅");
+if (window.supabase && typeof window.supabase.createClient === "function") {
+  supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+  console.log("Supabase initialized ✅");
+} else {
+  console.warn("Supabase NOT loaded — running without database ⚠️");
+}
 
 // ── MEMBER DATA ──
 const members = {
