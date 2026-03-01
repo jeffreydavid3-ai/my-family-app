@@ -69,18 +69,14 @@ async function updateGoalInSupabase(goal) {
 
   if (error) console.error("Update goal error:", error);
 }
-  
-} else {
-  console.warn("Supabase NOT loaded — running without database ⚠️");
-}
 
 // ── MEMBER DATA ──
 const members = {
   Dad:     { pin:'1234', emoji:'👨', color:'#4A90D9', role:'Father' },
-  Mom:     { pin:'2345', emoji:'👩', color:'#E05C3A', role:'Mother' },
-  Zach:    { pin:'3456', emoji:'🧑', color:'#52B788', role:'Son' },
-  Berrett: { pin:'4567', emoji:'🧒', color:'#E9A825', role:'Son' },
-  Jaxon:   { pin:'5678', emoji:'👦', color:'#9B59B6', role:'Son' },
+  Mom:     { pin:'1234', emoji:'👩', color:'#E05C3A', role:'Mother' },
+  Zach:    { pin:'1234', emoji:'🧑', color:'#52B788', role:'Son' },
+  Berrett: { pin:'1234', emoji:'🧒', color:'#E9A825', role:'Son' },
+  Jaxon:   { pin:'1234', emoji:'👦', color:'#9B59B6', role:'Son' },
 };
 function getMember(name) {
   const key = (name || "").trim();         // removes extra spaces
