@@ -2,15 +2,14 @@
 const SUPABASE_URL = "https://cebjungpkpmfovadwkis.supabase.co";
 const SUPABASE_KEY = "sb_publishable_M3cUwzEORiuAsuymFWIliQ_kqDH7nQZ";
 
-let supabaseClient = null;
+const supabaseClient =
+  window.supabase && typeof window.supabase.createClient === "function"
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+    : null;
 
-if (window.supabase && typeof window.supabase.createClient === "function") {
-  supabaseClient = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-  );
-  console.log("Supabase initialized ✅");
-  // ── SUPABASE: LOAD + SAVE GOALS ──
+console.log("Supabase client:", supabaseClient ? "✅ ready" : "❌ not loaded");
+
+// ── SUPABASE: LOAD + SAVE GOALS ──
 async function loadGoalsFromSupabase() {
   if (!supabaseClient) return;
 
@@ -36,6 +35,8 @@ async function loadGoalsFromSupabase() {
 }
 
 async function insertGoalToSupabase(goal) {
+  if (!supabaseClient) return null;
+
   const { data, error } = await supabaseClient
     .from("goals")
     .insert([{
@@ -54,7 +55,7 @@ async function insertGoalToSupabase(goal) {
     return null;
   }
 
-  return data; // row including generated id
+  return data;
 }
 
 async function updateGoalInSupabase(goal) {
