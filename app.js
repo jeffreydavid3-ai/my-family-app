@@ -550,7 +550,6 @@ function filterCat(el,cat){
 }
 
 function renderTracker(){
-  // Show goals for the selected plan member (their own + All goals)
   const filtered=goals.filter(g=>{
     const memberOk = g.member===planViewMember || g.member==='All';
     const catOk = currentCatFilter==='all' || g.cat===currentCatFilter;
@@ -561,14 +560,18 @@ function renderTracker(){
   document.getElementById('tracker-summary').textContent=`${done}/${filtered.length} completed today${!isViewingOwn?' · Viewing '+planViewMember+"'s plan":''}`;
   const ci={fitness:'💪',finance:'💰',spiritual:'🙏'};
   document.getElementById('goal-list').innerHTML=filtered.map(g=>{
-    const canToggle = isViewingOwn; // only check off your own view
+    const canToggle = isViewingOwn;
+    const canEdit   = isViewingOwn && g.member !== 'All'; // only edit your own personal goals
     return `
-      <div class="goal-card ${g.done?'completed':''}" onclick="${canToggle?`toggleGoal('${g.id}')`:''}">
-        <div style="flex:1;">
+      <div class="goal-card ${g.done?'completed':''}" style="position:relative;">
+        <div style="flex:1;cursor:${canToggle?'pointer':'default'};" onclick="${canToggle?`toggleGoal('${g.id}')`:''}" >
           <div style="font-weight:600;font-size:13px;${g.done?'text-decoration:line-through;opacity:0.4;':''}">${g.name}</div>
-          <div style="font-size:10px;color:var(--muted);margin-top:2px;">${ci[g.cat]} ${g.cat.charAt(0).toUpperCase()+g.cat.slice(1)}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px;">${ci[g.cat]} ${g.cat.charAt(0).toUpperCase()+g.cat.slice(1)} · ${g.freq}</div>
         </div>
-        <div class="check-btn ${g.done?'done':''}" ${!canToggle?'style="opacity:0.3;cursor:default;"':''}>${g.done?'✓':''}</div>
+        ${canEdit ? `
+          <button onclick="openEditForm('${g.id}')" style="background:rgba(74,174,217,0.12);border:1px solid rgba(74,174,217,0.25);border-radius:8px;padding:5px 9px;color:var(--blue);font-size:11px;font-weight:600;cursor:pointer;flex-shrink:0;font-family:'Lexend',sans-serif;">✏️</button>
+        ` : ''}
+        <div class="check-btn ${g.done?'done':''}" onclick="${canToggle?`toggleGoal('${g.id}')`:''}  " ${!canToggle?'style="opacity:0.3;cursor:default;"':''}>${g.done?'✓':''}</div>
       </div>
     `;
   }).join('')||'<div style="text-align:center;color:var(--muted);padding:32px;font-size:13px;">No goals found.</div>';
@@ -602,16 +605,12 @@ function checkCelebration(g){
 // ── ADD GOAL ──
 function renderAddForm(){
   const notice=document.getElementById('add-lock-notice');
-  notice.style.display='block';
-  notice.innerHTML=`🔒 Adding as <strong>${loggedInUser}</strong>. You can assign to yourself or All.`;
-
-  // Member assign chips — only show logged-in user + All
-  const allowed=['All',loggedInUser];
-document.getElementById('member-assign').innerHTML = allowed.map(m=>`
-  <div class="member-chip ${m==='All'?'selected':''}" data-member="${m}" onclick="toggleMember(this)">
-    ${m==='All' ? '👪 All' : `${getMember(m).emoji} ${m}`}
-  </div>
-`).join('');
+  if (notice) {
+    notice.style.display='block';
+    notice.innerHTML=`🔒 Adding as <strong>${loggedInUser}</strong>. Goals are assigned to you only.`;
+  }
+  // No "All" option — goals only assigned to the logged-in user
+  selectedMembers = new Set([loggedInUser]);
 }
 
 function selectCat(cat){selectedCat=cat;['fitness','finance','spiritual'].forEach(c=>document.getElementById('cat-'+c).classList.remove('selected'));document.getElementById('cat-'+cat).classList.add('selected');}
@@ -627,14 +626,12 @@ async function saveGoal(){
   const name = document.getElementById('goal-name-input').value.trim();
   if(!name){ alert('Please enter a goal name!'); return; }
 
-  const assignTo = [...selectedMembers][0] || loggedInUser;
-
   const newGoal = {
     id: null,
     name,
     cat: selectedCat,
     freq: selectedFreq,
-    member: assignTo,
+    member: loggedInUser,
     done: false,
     streak: 0
   };
@@ -655,6 +652,108 @@ async function saveGoal(){
   toggleAddGoalForm(false);
   renderTracker();
   showModal('🎯','Goal Added!',`"${name}" added to the tracker!`);
+}
+
+// ── EDIT / DELETE GOAL ──
+let editingCat  = 'fitness';
+let editingFreq = 'daily';
+
+function openEditForm(id) {
+  const g = goals.find(g => String(g.id) === String(id));
+  if (!g) return;
+
+  // Hide list, show edit form
+  document.getElementById('goals-list-section').style.display = 'none';
+  document.getElementById('add-goal-form-section').style.display  = 'none';
+  document.getElementById('edit-goal-form-section').style.display = 'block';
+
+  // Populate fields
+  document.getElementById('edit-goal-id').value   = g.id;
+  document.getElementById('edit-goal-name').value = g.name;
+
+  editingCat  = g.cat  || 'fitness';
+  editingFreq = g.freq || 'daily';
+
+  // Highlight category
+  ['fitness','finance','spiritual'].forEach(c => {
+    document.getElementById('edit-cat-'+c).classList.toggle('selected', c === editingCat);
+  });
+  // Highlight frequency
+  ['daily','weekly'].forEach(f => {
+    document.getElementById('edit-freq-'+f).classList.toggle('selected', f === editingFreq);
+  });
+
+  document.querySelector('.main').scrollTop = 0;
+}
+
+function closeEditForm() {
+  document.getElementById('edit-goal-form-section').style.display = 'none';
+  document.getElementById('goals-list-section').style.display     = 'block';
+}
+
+function editSelectCat(cat) {
+  editingCat = cat;
+  ['fitness','finance','spiritual'].forEach(c =>
+    document.getElementById('edit-cat-'+c).classList.toggle('selected', c === cat)
+  );
+}
+
+function editSelectFreq(freq) {
+  editingFreq = freq;
+  ['daily','weekly'].forEach(f =>
+    document.getElementById('edit-freq-'+f).classList.toggle('selected', f === freq)
+  );
+}
+
+async function saveEditGoal() {
+  const id   = document.getElementById('edit-goal-id').value;
+  const name = document.getElementById('edit-goal-name').value.trim();
+  if (!name) { alert('Goal name cannot be empty.'); return; }
+
+  const g = goals.find(g => String(g.id) === String(id));
+  if (!g) return;
+
+  g.name = name;
+  g.cat  = editingCat;
+  g.freq = editingFreq;
+
+  // Update in Supabase
+  if (supabaseClient) {
+    const { error } = await supabaseClient
+      .from('goals')
+      .update({ title: g.name, cat: g.cat, freq: g.freq })
+      .eq('id', g.id);
+    if (error) logSupabaseError('Edit goal', error);
+  }
+
+  closeEditForm();
+  renderTracker();
+  showModal('✏️', 'Goal Updated!', `"${g.name}" has been saved.`);
+}
+
+async function deleteGoal() {
+  const id = document.getElementById('edit-goal-id').value;
+  const g  = goals.find(g => String(g.id) === String(id));
+  if (!g) return;
+
+  const confirmed = confirm(`Delete "${g.name}"? This cannot be undone.`);
+  if (!confirmed) return;
+
+  // Remove from Supabase
+  if (supabaseClient) {
+    const { error } = await supabaseClient
+      .from('goals')
+      .delete()
+      .eq('id', g.id);
+    if (error) { logSupabaseError('Delete goal', error); return; }
+  }
+
+  // Remove from local array
+  goals = goals.filter(g => String(g.id) !== String(id));
+
+  closeEditForm();
+  renderTracker();
+  showModal('🗑️', 'Goal Deleted', `"${g.name}" has been removed.`);
 }
 
 // ── CALENDAR ──

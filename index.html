@@ -186,11 +186,39 @@
                 <div class="radio-option" id="freq-weekly" onclick="selectFreq('weekly')"><span class="option-icon">📆</span>Weekly</div>
               </div>
             </div>
-            <div class="form-group">
-              <label class="form-label">Assign To</label>
-              <div class="member-select" id="member-assign"></div>
-            </div>
             <button class="btn-primary" onclick="saveGoal()">Save Goal 🎯</button>
+          </div>
+        </div>
+
+        <!-- Inline edit-goal form (hidden by default) -->
+        <div id="edit-goal-form-section" style="display:none;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+            <button onclick="closeEditForm()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;padding:0;">←</button>
+            <div style="font-family:'Lexend',sans-serif;font-size:17px;font-weight:700;">Edit Goal</div>
+          </div>
+          <div class="form-card">
+            <input type="hidden" id="edit-goal-id" />
+            <div class="form-group">
+              <label class="form-label">Goal Name</label>
+              <input class="form-input" id="edit-goal-name" placeholder="e.g. Walk 10,000 steps" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Category</label>
+              <div class="radio-group">
+                <div class="radio-option selected" id="edit-cat-fitness" onclick="editSelectCat('fitness')"><span class="option-icon">💪</span>Fitness</div>
+                <div class="radio-option" id="edit-cat-finance" onclick="editSelectCat('finance')"><span class="option-icon">💰</span>Finance</div>
+                <div class="radio-option" id="edit-cat-spiritual" onclick="editSelectCat('spiritual')"><span class="option-icon">🙏</span>Spiritual</div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Frequency</label>
+              <div class="radio-group">
+                <div class="radio-option selected" id="edit-freq-daily" onclick="editSelectFreq('daily')"><span class="option-icon">📅</span>Daily</div>
+                <div class="radio-option" id="edit-freq-weekly" onclick="editSelectFreq('weekly')"><span class="option-icon">📆</span>Weekly</div>
+              </div>
+            </div>
+            <button class="btn-primary" onclick="saveEditGoal()" style="margin-bottom:10px;">Save Changes ✓</button>
+            <button onclick="deleteGoal()" style="width:100%;padding:12px;background:rgba(224,92,58,0.12);border:1.5px solid rgba(224,92,58,0.35);border-radius:12px;color:#E05C3A;font-family:'Lexend',sans-serif;font-size:13px;font-weight:600;cursor:pointer;">🗑 Delete Goal</button>
           </div>
         </div>
 
