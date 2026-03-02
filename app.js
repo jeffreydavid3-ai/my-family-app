@@ -264,9 +264,7 @@ function loginAs(name) {
   document.getElementById('user-name-chip').textContent = name;
   document.getElementById('user-dot').style.background = m.color;
 
-  // Personal dashboard default
   selectedMember = name;
-
   initApp();
 }
 
@@ -347,6 +345,7 @@ async function initApp() {
   renderNotifications();
   renderPersonalDashboard();
   renderProfile();
+  renderSettings();
 }
 
 function renderPlanMemberTabs() {
@@ -379,28 +378,52 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ── NAV ──
-const pageNames={dashboard:'Dashboard',tracker:'My Plan',add:'Add Goal',history:'History',reminders:'Profile'};
-function showPage(id){
-  document.querySelectorAll('.content').forEach(c=>c.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('nav-add').classList.remove('active');
-  document.getElementById('page-'+id).classList.add('active');
-  document.getElementById('page-title').textContent=pageNames[id];
-  const ni=document.querySelectorAll('.nav-item');
-  const idx={dashboard:0,tracker:1,history:2,reminders:3};
-  if(id==='add') document.getElementById('nav-add').classList.add('active');
-  else if(idx[id]!==undefined) ni[idx[id]].classList.add('active');
-  if(id==='reminders') renderProfile();
-  // Scroll to top
-  document.querySelector('.main').scrollTop=0;
+const pageNames = {
+  dashboard:   'Dashboard',
+  leaderboard: 'Leaderboard',
+  goals:       'My Goals',
+  riseroad:    'Rise Road',
+  settings:    'Settings',
+};
+
+function showPage(id) {
+  document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const goalsBtn = document.getElementById('nav-goals-btn');
+  if (goalsBtn) goalsBtn.classList.remove('active');
+
+  const page = document.getElementById('page-' + id);
+  if (page) page.classList.add('active');
+  document.getElementById('page-title').textContent = pageNames[id] || id;
+
+  // Highlight correct nav button
+  const ni = document.querySelectorAll('.nav-item');
+  const idx = { dashboard:0, leaderboard:1, riseroad:2, settings:3 };
+  if (id === 'goals') {
+    if (goalsBtn) goalsBtn.classList.add('active');
+  } else if (idx[id] !== undefined) {
+    ni[idx[id]].classList.add('active');
+  }
+
+  // Page-specific render hooks
+  if (id === 'riseroad') renderProfile();
+  if (id === 'settings') renderSettings();
+  if (id === 'goals') {
+    toggleAddGoalForm(false); // always start on list view
+    renderAddForm();
+  }
+
+  document.querySelector('.main').scrollTop = 0;
 }
 
-function switchDash(view){
-  document.getElementById('view-family').style.display=view==='family'?'block':'none';
-  document.getElementById('view-personal').style.display=view==='personal'?'block':'none';
-  document.getElementById('tab-family').classList.toggle('active',view==='family');
-  document.getElementById('tab-personal').classList.toggle('active',view==='personal');
-  if(view==='personal') renderPersonalDashboard();
+// Toggle between goal list and inline add form
+function toggleAddGoalForm(showForm) {
+  const list = document.getElementById('goals-list-section');
+  const form = document.getElementById('add-goal-form-section');
+  if (!list || !form) return;
+  list.style.display = showForm ? 'none' : 'block';
+  form.style.display = showForm ? 'block' : 'none';
+  if (showForm) renderAddForm();
 }
 
 // ── LEADERBOARD ──
@@ -583,9 +606,9 @@ async function saveGoal(){
   goals.push(newGoal);
 
   document.getElementById('goal-name-input').value = '';
-  showModal('🎯','Goal Added!',`"${name}" added to the tracker!`);
-  showPage('tracker');
+  toggleAddGoalForm(false);
   renderTracker();
+  showModal('🎯','Goal Added!',`"${name}" added to the tracker!`);
 }
 
 // ── CALENDAR ──
@@ -665,6 +688,17 @@ function renderProfile() {
   document.getElementById('profile-streak-line').textContent = `🔥 ${streak} day streak`;
 
   renderTrophyRoad(streak, currentLevel);
+}
+
+function renderSettings() {
+  if (!loggedInUser) return;
+  const m = getMember(loggedInUser);
+  const avatarEl = document.getElementById('settings-avatar');
+  const nameEl   = document.getElementById('settings-name');
+  const roleEl   = document.getElementById('settings-role');
+  if (avatarEl) { avatarEl.textContent = m.emoji; avatarEl.style.background = m.color + '33'; avatarEl.style.borderColor = m.color + '66'; }
+  if (nameEl)   nameEl.textContent = loggedInUser;
+  if (roleEl)   roleEl.textContent = m.role;
 }
 
 function renderTrophyRoad(streak, currentLevel) {
@@ -781,26 +815,21 @@ function renderNotifications(){
 
 // ── PERSONAL DASHBOARD ──
 function renderPersonalDashboard(){
-  const memberNames=Object.keys(members);
-  document.getElementById('personal-member-tabs').innerHTML=memberNames.map(m=>`
-    <button class="member-tab ${m===selectedMember?'active':''}" onclick="selectPersonalMember('${m}')"
-      style="${m===selectedMember?`background:${getMember(m).color};border-color:transparent;`:''}">
-      ${getMember(m).emoji} ${m}
-    </button>
-  `).join('');
+  // Dashboard always shows the logged-in user's own data
+  const activeMember = loggedInUser || selectedMember;
 
-  const d=personalData[selectedMember],cats=personalCats[selectedMember];
-const m = getMember(selectedMember);
-const color = m.color;
-const emoji = m.emoji;
-  const rank=leaderboardData.findIndex(m=>m.name===selectedMember)+1;
+  const d=personalData[activeMember],cats=personalCats[activeMember];
+  const m = getMember(activeMember);
+  const color = m.color;
+  const emoji = m.emoji;
+  const rank=leaderboardData.findIndex(x=>x.name===activeMember)+1;
   const rl=['🥇 #1','🥈 #2','🥉 #3','#4','#5'][rank-1];
 
   document.getElementById('personal-hero').innerHTML=`
     <div style="background:linear-gradient(135deg,${color}BB,${color}55);border-radius:16px;padding:16px 18px;color:white;display:flex;align-items:center;gap:14px;border:1px solid ${color}30;">
       <div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">${emoji}</div>
       <div style="flex:1;">
-        <div style="font-family:'Lexend',sans-serif;font-size:18px;font-weight:700;margin-bottom:2px;">${selectedMember}</div>
+        <div style="font-family:'Lexend',sans-serif;font-size:18px;font-weight:700;margin-bottom:2px;">${activeMember}</div>
         <div style="opacity:0.8;font-size:10px;">Rank ${rl} · Best streak: ${d.bestStreak}d</div>
       </div>
       <div style="text-align:center;background:rgba(20,12,0,0.4);border:2px solid rgba(255,120,0,0.8);border-radius:16px;padding:12px 16px;flex-shrink:0;box-shadow:0 0 18px rgba(255,100,0,0.5),0 0 40px rgba(255,80,0,0.2),inset 0 0 16px rgba(255,100,0,0.07);">
@@ -817,7 +846,7 @@ const emoji = m.emoji;
     <div class="stat-card"><div class="stat-icon">🎯</div><div class="stat-label">Success</div><div class="stat-value">${d.successRate}%</div><div class="stat-sub">all-time</div></div>
   `;
 
-  const myGoals=goals.filter(g=>g.member===selectedMember||g.member==='All');
+  const myGoals=goals.filter(g=>g.member===activeMember||g.member==='All');
   document.getElementById('personal-streaks').innerHTML=myGoals.length?`
     <div style="display:flex;flex-direction:column;gap:9px;">${myGoals.map(g=>{
       const fp=Math.min(g.streak*10,100);

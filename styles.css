@@ -257,10 +257,15 @@
   .nav-item:hover .nav-icon, .nav-item.active .nav-icon { transform:translateY(-2px); }
   .nav-item.active { color:var(--blue); }
   .nav-item-add { display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; transition:all 0.2s; border:none; background:none; font-family:'Lexend',sans-serif; color:#6A85B0; font-size:10px; font-weight:500; margin-top:-16px; }
-  .nav-add-circle { width:52px; height:52px; border-radius:50%; background:var(--blue-dark); display:flex; align-items:center; justify-content:center; font-size:26px; color:white; line-height:1; box-shadow:0 4px 16px rgba(26,111,168,0.55); border:3px solid #1C2F52; transition:all 0.2s; }
-  .nav-item-add:hover .nav-add-circle { background:#1580C0; transform:scale(1.08); }
-  .nav-item-add.active .nav-add-circle { background:#1580C0; }
-  .nav-item-add.active { color:var(--blue); }
+  .nav-add-circle { width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:26px; color:white; line-height:1; box-shadow:0 4px 16px rgba(26,111,168,0.55); border:3px solid #1C2F52; transition:all 0.2s; }
+  .nav-check-circle { background:#16A34A; box-shadow:0 4px 16px rgba(22,163,74,0.55); font-size:28px; font-weight:900; }
+  .nav-item-add:hover .nav-add-circle { transform:scale(1.08); filter:brightness(1.15); }
+  .nav-item-add.active .nav-add-circle { filter:brightness(1.2); }
+  .nav-item-add.active { color:#22C55E; }
+
+  /* Inline Add Goal button on My Goals page */
+  .btn-add-goal-inline { display:block; width:100%; margin-top:14px; padding:12px; background:rgba(22,163,74,0.12); border:1.5px dashed rgba(22,163,74,0.4); border-radius:12px; color:#22C55E; font-family:'Lexend',sans-serif; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; text-align:center; }
+  .btn-add-goal-inline:hover { background:rgba(22,163,74,0.2); border-color:#22C55E; }
 
   /* ── MODAL ── */
   .modal-overlay { position:absolute; inset:0; background:rgba(0,0,0,0.75); display:flex; align-items:center; justify-content:center; z-index:1000; backdrop-filter:blur(6px); opacity:0; pointer-events:none; transition:opacity 0.3s; border-radius:45px; overflow:hidden; }
