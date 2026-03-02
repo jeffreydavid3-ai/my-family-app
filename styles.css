@@ -177,8 +177,8 @@
   .progress-bar-fill { height:100%; border-radius:100px; transition:width 1s ease; }
 
   /* ── GOAL CARDS ── */
-  .goal-card { background:var(--card2); border-radius:14px; padding:12px 14px; display:flex; align-items:center; gap:12px; border:1px solid var(--border); transition:all 0.2s; cursor:pointer; margin-bottom:8px; }
-  .goal-card:hover { transform:translateX(3px); border-color:var(--blue); }
+  .goal-card { background:var(--card2); border-radius:14px; padding:12px 14px; display:flex; align-items:center; gap:10px; border:1px solid var(--border); transition:all 0.2s; cursor:default; margin-bottom:8px; overflow:visible; }
+  .goal-card:hover { border-color:var(--blue); }
   .goal-card.completed { border-left:3px solid var(--blue); }
   .check-btn { width:34px; height:34px; border-radius:50%; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; background:var(--bg3); font-size:14px; flex-shrink:0; color:white; }
   .check-btn.done { background:#22C55E; border-color:#22C55E; animation:checkPop 0.3s ease; }

@@ -569,7 +569,7 @@ function renderTracker(){
           <div style="font-size:10px;color:var(--muted);margin-top:2px;">${ci[g.cat]} ${g.cat.charAt(0).toUpperCase()+g.cat.slice(1)} · ${g.freq}</div>
         </div>
         ${canEdit ? `
-          <button onclick="openEditForm('${g.id}')" style="background:rgba(74,174,217,0.12);border:1px solid rgba(74,174,217,0.25);border-radius:8px;padding:5px 9px;color:var(--blue);font-size:11px;font-weight:600;cursor:pointer;flex-shrink:0;font-family:'Lexend',sans-serif;">✏️</button>
+          <button onclick="event.stopPropagation(); openEditForm('${g.id}')" style="background:rgba(74,174,217,0.15);border:1.5px solid rgba(74,174,217,0.4);border-radius:10px;padding:7px 13px;color:var(--blue);font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0;font-family:'Lexend',sans-serif;min-width:44px;min-height:36px;">✏️</button>
         ` : ''}
         <div class="check-btn ${g.done?'done':''}" onclick="${canToggle?`toggleGoal('${g.id}')`:''}  " ${!canToggle?'style="opacity:0.3;cursor:default;"':''}>${g.done?'✓':''}</div>
       </div>
