@@ -290,12 +290,52 @@ let goals = [
   { id:10, name:'Family devotion',     cat:'spiritual',freq:'daily', member:'All',     done:true,  streak:7 },
 ];
 
+// ── XP SYSTEM ──
+// Each completed daily goal = 10 XP. Max 30 XP/day per person (3 goals).
+// Streak bonuses apply when ALL 3 daily goals are completed:
+//   1–2 days: +0%  |  3–6 days: +5%  |  7–13 days: +10%  |  14+ days: +20%
+// Personal XP is permanent (never resets). Streaks reset on missed days.
+// Family XP = sum of all members' personal XP → drives arena progression.
+
+const XP_PER_GOAL = 10;
+
+const streakBonusTiers = [
+  { minDays: 14, multiplier: 1.20, label: '+20%', color: '#FFD700' },
+  { minDays:  7, multiplier: 1.10, label: '+10%', color: '#22C55E' },
+  { minDays:  3, multiplier: 1.05, label:  '+5%', color: '#4AAED9' },
+  { minDays:  1, multiplier: 1.00, label:   '—',  color: '#7A90B8' },
+];
+
+function getStreakBonus(streak) {
+  return streakBonusTiers.find(t => streak >= t.minDays) || streakBonusTiers[streakBonusTiers.length - 1];
+}
+
+// Family Rise Arenas — named tiers based on cumulative family XP
+const familyArenas = [
+  { arena: 1, name: 'The Spark',        minXP:     0, maxXP:  1999, icon: '🕯️',  color: '#7A90B8', bg: 'linear-gradient(135deg,#1A2338,#253660)' },
+  { arena: 2, name: 'Iron Resolve',     minXP:  2000, maxXP:  3999, icon: '⚙️',  color: '#9CA3AF', bg: 'linear-gradient(135deg,#2A3040,#3D4A5C)' },
+  { arena: 3, name: 'Bronze Battalion', minXP:  4000, maxXP:  5999, icon: '🛡️',  color: '#A0622A', bg: 'linear-gradient(135deg,#3D2010,#6B3A1F)' },
+  { arena: 4, name: 'Silver Storm',     minXP:  6000, maxXP:  7999, icon: '⚡',  color: '#C0C8D8', bg: 'linear-gradient(135deg,#2A3550,#4A5A78)' },
+  { arena: 5, name: 'Gold Dynasty',     minXP:  8000, maxXP:  9999, icon: '👑',  color: '#E9A825', bg: 'linear-gradient(135deg,#3D2800,#7A5200)' },
+  { arena: 6, name: 'Emerald Empire',   minXP: 10000, maxXP: 11999, icon: '💚',  color: '#10B981', bg: 'linear-gradient(135deg,#062820,#0E4D3A)' },
+  { arena: 7, name: 'Diamond Dominion', minXP: 12000, maxXP: 14999, icon: '💎',  color: '#7DF9FF', bg: 'linear-gradient(135deg,#0A1520,#0D2A40)' },
+  { arena: 8, name: 'The Johnson Legacy', minXP: 15000, maxXP: Infinity, icon: '🏆', color: '#FFD700', bg: 'linear-gradient(135deg,#2A1A00,#5C3D00,#8B6000)' },
+];
+
+function getFamilyArena(totalXP) {
+  return familyArenas.find(a => totalXP >= a.minXP && totalXP <= a.maxXP) || familyArenas[0];
+}
+
+function getFamilyTotalXP() {
+  return Object.values(personalData).reduce((sum, d) => sum + (d.xp || 0), 0);
+}
+
 const leaderboardData = [
-  { name:'Dad', score:95, streak:8 },
-  { name:'Zach', score:88, streak:5 },
-  { name:'Mom', score:85, streak:6 },
-  { name:'Berrett', score:78, streak:4 },
-  { name:'Jaxon', score:72, streak:3 },
+  { name:'Dad',     xp: 2730, streak: 8 },
+  { name:'Zach',    xp: 2310, streak: 5 },
+  { name:'Mom',     xp: 2016, streak: 6 },
+  { name:'Berrett', xp: 1470, streak: 4 },
+  { name:'Jaxon',   xp:  990, streak: 3 },
 ];
 
 const badges = [
@@ -308,11 +348,11 @@ const badges = [
 ];
 
 const personalData = {
-  Dad:     { score:95, streak:8, bestStreak:14, goalsTotal:4, goalsDone:4, daysActive:28, successRate:91, badges:['🔥 7-Day Streak','💰 Saver','🏅 Month Strong','⭐ Perfect Day'] },
-  Mom:     { score:85, streak:6, bestStreak:11, goalsTotal:3, goalsDone:2, daysActive:25, successRate:83, badges:['💰 Saver','🙏 Faithful'] },
-  Zach:    { score:88, streak:5, bestStreak:9,  goalsTotal:2, goalsDone:2, daysActive:22, successRate:87, badges:['🙏 Faithful','⭐ Perfect Day'] },
-  Berrett: { score:78, streak:4, bestStreak:7,  goalsTotal:2, goalsDone:1, daysActive:19, successRate:74, badges:['💪 Fitness Week'] },
-  Jaxon:   { score:72, streak:3, bestStreak:6,  goalsTotal:2, goalsDone:0, daysActive:15, successRate:68, badges:['🔥 First Streak'] },
+  Dad:     { xp:2730, streak:8,  bestStreak:14, goalsTotal:3, goalsDone:3, daysActive:28, successRate:91, badges:['🔥 7-Day Streak','💰 Saver','🏅 Month Strong','⭐ Perfect Day'] },
+  Mom:     { xp:2016, streak:6,  bestStreak:11, goalsTotal:3, goalsDone:2, daysActive:25, successRate:83, badges:['💰 Saver','🙏 Faithful'] },
+  Zach:    { xp:2310, streak:5,  bestStreak:9,  goalsTotal:3, goalsDone:3, daysActive:22, successRate:87, badges:['🙏 Faithful','⭐ Perfect Day'] },
+  Berrett: { xp:1470, streak:4,  bestStreak:7,  goalsTotal:3, goalsDone:1, daysActive:19, successRate:74, badges:['💪 Fitness Week'] },
+  Jaxon:   { xp: 990, streak:3,  bestStreak:6,  goalsTotal:3, goalsDone:0, daysActive:15, successRate:68, badges:['🔥 First Streak'] },
 };
 
 const personalCats = {
@@ -434,12 +474,15 @@ function getMemberLevel(name) {
 }
 
 function renderLeaderboard(){
-  const sym=['🥈','🥉','4️⃣','5️⃣'];
-  const bg=['linear-gradient(135deg,#5A6472,#8A9CB0)','linear-gradient(135deg,#6B3A1F,#A0622A)','linear-gradient(135deg,#1F2E4A,#253660)','linear-gradient(135deg,#1F2E4A,#253660)'];
+  // Sort leaderboard by XP descending
+  const sorted = [...leaderboardData].sort((a,b) => b.xp - a.xp);
+  const sym = ['🥈','🥉','4️⃣','5️⃣'];
+  const bg  = ['linear-gradient(135deg,#5A6472,#8A9CB0)','linear-gradient(135deg,#6B3A1F,#A0622A)','linear-gradient(135deg,#1F2E4A,#253660)','linear-gradient(135deg,#1F2E4A,#253660)'];
 
-  const first = leaderboardData[0];
-  const rest = leaderboardData.slice(1);
+  const first = sorted[0];
+  const rest  = sorted.slice(1);
   const firstLevel = getMemberLevel(first.name);
+  const firstBonus = getStreakBonus(first.streak);
 
   const firstHtml = `
     <div style="background:linear-gradient(135deg,#8B6000,#E9A825,#FFD700);border-radius:16px;padding:16px 15px 14px;color:white;margin-bottom:8px;box-shadow:0 0 22px rgba(233,168,37,0.5),0 4px 16px rgba(0,0,0,0.4);">
@@ -451,31 +494,34 @@ function renderLeaderboard(){
             <div style="font-size:18px;line-height:1;position:absolute;top:-20px;left:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.4));">👑</div>
             <div style="font-weight:800;font-size:15px;margin-bottom:2px;padding-top:2px;">${first.name}</div>
           </div>
-          <div style="font-size:9px;opacity:0.8;margin-bottom:5px;">${trophyLevels[firstLevel-1].name}</div>
-          <div style="background:rgba(255,255,255,0.25);border-radius:100px;height:5px;overflow:hidden;"><div style="width:${first.score}%;height:100%;background:white;border-radius:100px;"></div></div>
+          <div style="font-size:9px;opacity:0.8;margin-bottom:4px;">${trophyLevels[firstLevel-1].name}</div>
+          <div style="background:rgba(0,0,0,0.2);border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700;display:inline-block;">🔥 ${first.streak} day streak</div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
-          <div style="font-family:'Lexend',sans-serif;font-size:20px;font-weight:800;line-height:1;">${first.score}%</div>
-          <div style="background:rgba(0,0,0,0.2);border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700;">🔥 ${first.streak} day streak</div>
+          <div style="font-family:'Lexend',sans-serif;font-size:20px;font-weight:800;line-height:1;">${first.xp.toLocaleString()}</div>
+          <div style="font-size:9px;opacity:0.75;font-weight:600;letter-spacing:0.5px;">TOTAL XP</div>
+          ${firstBonus.multiplier > 1 ? `<div style="background:rgba(0,0,0,0.25);border-radius:8px;padding:2px 7px;font-size:10px;font-weight:700;color:${firstBonus.color};">⚡ ${firstBonus.label} bonus</div>` : ''}
         </div>
       </div>
     </div>
   `;
 
-  const restHtml = rest.map((m,i)=>{
+  const restHtml = rest.map((m,i) => {
     const lvl = getMemberLevel(m.name);
+    const bonus = getStreakBonus(m.streak);
     return `
       <div style="background:${bg[i]};border-radius:12px;padding:10px 13px;color:white;display:flex;align-items:center;gap:10px;margin-bottom:7px;cursor:pointer;transition:transform 0.2s;" onmouseover="this.style.transform='translateX(3px)'" onmouseout="this.style.transform=''">
         <div style="font-size:16px;flex-shrink:0;">${sym[i]}</div>
         <div style="flex-shrink:0;">${getLevelBadgeSVG(lvl, 34)}</div>
         <div style="flex:1;min-width:0;">
           <div style="font-weight:700;font-size:12px;margin-bottom:1px;">${m.name}</div>
-          <div style="font-size:9px;opacity:0.65;margin-bottom:4px;">${trophyLevels[lvl-1].name}</div>
-          <div style="background:rgba(255,255,255,0.18);border-radius:100px;height:4px;overflow:hidden;"><div style="width:${m.score}%;height:100%;background:white;border-radius:100px;"></div></div>
+          <div style="font-size:9px;opacity:0.65;margin-bottom:3px;">${trophyLevels[lvl-1].name}</div>
+          <div style="background:rgba(0,0,0,0.22);border-radius:20px;padding:2px 7px;font-size:10px;font-weight:700;display:inline-block;">🔥 ${m.streak} day streak</div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;">
-          <div style="font-family:'Lexend',sans-serif;font-size:16px;font-weight:700;line-height:1;">${m.score}%</div>
-          <div style="background:rgba(0,0,0,0.22);border-radius:20px;padding:2px 7px;font-size:10px;font-weight:700;">🔥 ${m.streak} day streak</div>
+          <div style="font-family:'Lexend',sans-serif;font-size:16px;font-weight:700;line-height:1;">${m.xp.toLocaleString()}</div>
+          <div style="font-size:9px;opacity:0.65;font-weight:600;letter-spacing:0.4px;">XP</div>
+          ${bonus.multiplier > 1 ? `<div style="background:rgba(0,0,0,0.25);border-radius:8px;padding:1px 6px;font-size:9px;font-weight:700;color:${bonus.color};">⚡ ${bonus.label}</div>` : ''}
         </div>
       </div>
     `;
@@ -703,20 +749,22 @@ function renderSettings() {
 
 function renderTrophyRoad(streak, currentLevel) {
   // Build the Clash Royale-style stacked steps path
-  // Each level = 7 steps (days). Steps go 1–7 for each level.
   const html = trophyLevels.slice().reverse().map((lvl, revIdx) => {
-    const lvlNum = trophyLevels.length - revIdx; // ✅ 8 down to 1
+    const lvlNum = trophyLevels.length - revIdx;
     const realLvl = trophyLevels[lvlNum - 1];
     const levelStartDay = (lvlNum - 1) * 7;
     const isCurrentLevel = lvlNum === currentLevel;
     const isCompleted = streak >= lvlNum * 7;
     const isLocked = streak < levelStartDay;
 
-    // Steps within this level (7 steps = days)
+    // Determine which streak bonus applies at this level's streak threshold
+    const lvlStreakMin = levelStartDay + 1; // first day of this level = streak value
+    const bonus = getStreakBonus(lvlStreakMin);
+
     const stepsHtml = Array.from({length:7}, (_,i) => {
       const stepDay = levelStartDay + i + 1;
       const isDone = streak >= stepDay;
-      const isCurrent = stepDay === streak + 1; // next step to achieve
+      const isCurrent = stepDay === streak + 1;
       return `
         <div style="
           display:flex; align-items:center; justify-content:center;
@@ -728,20 +776,18 @@ function renderTrophyRoad(streak, currentLevel) {
           transition:all 0.3s;
           ${isCurrent ? `box-shadow:inset 0 0 12px ${realLvl.color}66;` : ''}
         ">
-          <!-- Crown icons on sides -->
           <div style="position:absolute;left:14px;opacity:${isLocked?0.2:0.7};font-size:13px;">👑</div>
           <div style="font-size:13px;font-weight:700;color:${isDone?'rgba(255,255,255,0.9)':isLocked?'rgba(255,255,255,0.15)':'rgba(255,255,255,0.5)'};">${stepDay <= 49 ? stepDay : ''}</div>
           <div style="position:absolute;right:14px;opacity:${isLocked?0.2:0.7};font-size:13px;">👑</div>
           ${isCurrent ? `<div style="position:absolute;right:-2px;font-size:10px;background:var(--gold);color:#000;border-radius:8px;padding:1px 5px;font-weight:700;">YOU</div>` : ''}
         </div>
       `;
-    }).reverse().join(''); // reverse so highest step is on top
+    }).reverse().join('');
 
     const opacity = isLocked ? 0.35 : 1;
 
     return `
       <div style="opacity:${opacity};margin-bottom:0;">
-        <!-- Level badge row -->
         <div style="
           background:${isCompleted ? realLvl.bg : isCurrentLevel ? realLvl.bg : 'linear-gradient(135deg,#111827,#1F2E4A)'};
           padding:14px 20px;
@@ -749,20 +795,24 @@ function renderTrophyRoad(streak, currentLevel) {
           border-top:2px solid ${realLvl.color}55;
           ${isCurrentLevel ? `box-shadow:0 0 20px ${realLvl.color}44;` : ''}
         ">
-          <div style="display:flex;align-items:center;gap:12px;">
+          <!-- Left: level number + XP bonus pill -->
+          <div style="display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:52px;">
             <div style="font-size:10px;font-weight:700;color:${realLvl.color};letter-spacing:0.5px;opacity:0.8;">LEVEL ${lvlNum}</div>
+            <div style="background:${bonus.color}22;border:1px solid ${bonus.color}55;border-radius:8px;padding:2px 7px;font-size:10px;font-weight:700;color:${bonus.color};white-space:nowrap;">
+              ⚡ ${bonus.label} XP
+            </div>
           </div>
+          <!-- Center: badge + name -->
           <div style="text-align:center;">
             <div>${getLevelBadgeSVG(lvlNum)}</div>
             <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.8);margin-top:2px;letter-spacing:0.3px;">${realLvl.name}</div>
           </div>
-          <div style="font-size:11px;color:rgba(255,255,255,0.5);text-align:right;">
+          <!-- Right: progress/status -->
+          <div style="font-size:11px;color:rgba(255,255,255,0.5);text-align:right;min-width:52px;">
             ${isCompleted ? '<span style="color:#22C55E;font-weight:700;">✓ Done</span>' : isCurrentLevel ? `<span style="color:var(--gold);font-weight:700;">${streak - levelStartDay}/7</span>` : isLocked ? '🔒' : ''}
           </div>
         </div>
-        <!-- Steps -->
         <div>${stepsHtml}</div>
-        <!-- Glowing divider between levels -->
         <div style="height:3px;background:linear-gradient(90deg,transparent,${realLvl.color}88,transparent);"></div>
       </div>
     `;
@@ -771,6 +821,94 @@ function renderTrophyRoad(streak, currentLevel) {
   document.getElementById('trophy-road-content').innerHTML = `
     <div style="background:var(--bg);border-radius:0 0 12px 12px;overflow:hidden;">
       ${html}
+    </div>
+  `;
+
+  // Render Family Arena section below the trophy road
+  renderFamilyArena();
+}
+
+function renderFamilyArena() {
+  const el = document.getElementById('family-arena-section');
+  if (!el) return;
+
+  const totalXP = getFamilyTotalXP();
+  const current = getFamilyArena(totalXP);
+  const nextArena = familyArenas.find(a => a.arena === current.arena + 1);
+  const xpIntoArena = totalXP - current.minXP;
+  const arenaRange = nextArena ? (current.maxXP - current.minXP + 1) : 1;
+  const progressPct = nextArena ? Math.min((xpIntoArena / arenaRange) * 100, 100) : 100;
+  const xpToNext = nextArena ? (nextArena.minXP - totalXP) : 0;
+
+  const arenaTilesHtml = familyArenas.map(a => {
+    const isActive = a.arena === current.arena;
+    const isPast   = a.arena < current.arena;
+    return `
+      <div style="
+        display:flex; align-items:center; gap:10px; padding:10px 14px;
+        background:${isActive ? a.bg : isPast ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.2)'};
+        border-radius:12px; margin-bottom:6px;
+        border:1px solid ${isActive ? a.color + '66' : 'transparent'};
+        ${isActive ? `box-shadow:0 0 16px ${a.color}33;` : ''}
+        opacity:${isPast ? 0.7 : 1};
+        transition: all 0.2s;
+      ">
+        <div style="font-size:${isActive ? '26px' : '18px'};flex-shrink:0;filter:${isActive ? `drop-shadow(0 0 6px ${a.color})` : 'none'};">${a.icon}</div>
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:10px;font-weight:700;color:${a.color};letter-spacing:0.4px;">ARENA ${a.arena}</span>
+            ${isActive ? `<span style="background:${a.color};color:#000;border-radius:6px;padding:1px 6px;font-size:9px;font-weight:800;">CURRENT</span>` : ''}
+            ${isPast ? `<span style="color:#22C55E;font-size:10px;">✓</span>` : ''}
+          </div>
+          <div style="font-family:'Lexend',sans-serif;font-size:13px;font-weight:700;color:${isActive ? 'white' : 'rgba(255,255,255,0.5)'};">${a.name}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.4);">${a.minXP.toLocaleString()}${a.maxXP === Infinity ? '+ XP' : ' – ' + a.maxXP.toLocaleString() + ' XP'}</div>
+        </div>
+        ${isActive && nextArena ? `
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-size:10px;color:rgba(255,255,255,0.5);margin-bottom:4px;">${xpToNext.toLocaleString()} XP to go</div>
+            <div style="width:60px;height:5px;background:rgba(255,255,255,0.1);border-radius:100px;overflow:hidden;">
+              <div style="width:${progressPct}%;height:100%;background:${a.color};border-radius:100px;transition:width 1s ease;"></div>
+            </div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="card" style="margin-top:18px;margin-bottom:18px;">
+      <div class="section-title" style="margin-bottom:4px;">🏟️ Family Rise Arena</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:14px;">Family XP accumulates across all members and never resets.</div>
+
+      <!-- Current arena hero -->
+      <div style="background:${current.bg};border-radius:14px;padding:16px;margin-bottom:14px;border:1px solid ${current.color}44;box-shadow:0 0 24px ${current.color}22;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+          <div style="font-size:36px;filter:drop-shadow(0 0 10px ${current.color});">${current.icon}</div>
+          <div>
+            <div style="font-size:10px;font-weight:700;color:${current.color};letter-spacing:0.5px;">CURRENT ARENA</div>
+            <div style="font-family:'Lexend',sans-serif;font-size:20px;font-weight:800;color:white;">${current.name}</div>
+          </div>
+          <div style="margin-left:auto;text-align:right;">
+            <div style="font-family:'Lexend',sans-serif;font-size:26px;font-weight:800;color:${current.color};line-height:1;">${totalXP.toLocaleString()}</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.5);font-weight:600;">FAMILY XP</div>
+          </div>
+        </div>
+        ${nextArena ? `
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.6);margin-bottom:5px;">
+              <span>Progress to ${nextArena.name}</span>
+              <span>${xpToNext.toLocaleString()} XP needed</span>
+            </div>
+            <div style="background:rgba(0,0,0,0.3);border-radius:100px;height:8px;overflow:hidden;">
+              <div style="width:${progressPct}%;height:100%;background:linear-gradient(90deg,${current.color}88,${current.color});border-radius:100px;transition:width 1.2s ease;box-shadow:0 0 8px ${current.color};"></div>
+            </div>
+          </div>
+        ` : `<div style="text-align:center;font-size:12px;font-weight:700;color:${current.color};">🏆 Maximum Arena Reached!</div>`}
+      </div>
+
+      <!-- All arena tiers -->
+      <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:0.5px;margin-bottom:8px;">ALL ARENAS</div>
+      ${arenaTilesHtml}
     </div>
   `;
 }
@@ -829,8 +967,12 @@ function renderPersonalDashboard(){
     <div style="background:linear-gradient(135deg,${color}BB,${color}55);border-radius:16px;padding:16px 18px;color:white;display:flex;align-items:center;gap:14px;border:1px solid ${color}30;">
       <div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">${emoji}</div>
       <div style="flex:1;">
-        <div style="font-family:'Lexend',sans-serif;font-size:18px;font-weight:700;margin-bottom:2px;">${activeMember}</div>
-        <div style="opacity:0.8;font-size:10px;">Rank ${rl} · Best streak: ${d.bestStreak}d</div>
+        <div style="font-family:'Lexend',sans-serif;font-size:18px;font-weight:700;margin-bottom:3px;">${activeMember}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+          <div style="font-family:'Lexend',sans-serif;font-size:22px;font-weight:800;color:#FFD700;line-height:1;text-shadow:0 0 12px rgba(255,200,0,0.4);">${d.xp.toLocaleString()}</div>
+          <div style="font-size:10px;font-weight:700;color:rgba(255,220,100,0.8);letter-spacing:0.5px;">XP</div>
+        </div>
+        <div style="opacity:0.7;font-size:10px;">Rank ${rl} · Best streak: ${d.bestStreak}d</div>
       </div>
       <div style="text-align:center;background:rgba(20,12,0,0.4);border:2px solid rgba(255,120,0,0.8);border-radius:16px;padding:12px 16px;flex-shrink:0;box-shadow:0 0 18px rgba(255,100,0,0.5),0 0 40px rgba(255,80,0,0.2),inset 0 0 16px rgba(255,100,0,0.07);">
         <div style="font-size:28px;line-height:1;margin-bottom:4px;filter:drop-shadow(0 0 10px rgba(255,140,0,0.9));">🔥</div>
