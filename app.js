@@ -863,25 +863,48 @@ async function wipeAllGoals() {
   if (btn) { btn.textContent = 'Deleting…'; btn.disabled = true; }
 
   if (supabaseClient) {
-    // Delete every row — use a filter that always matches (id is not null)
-    const { error } = await supabaseClient
+    // Step 1: fetch all goal IDs currently in the table
+    const { data: allGoals, error: fetchError } = await supabaseClient
+      .from('goals')
+      .select('id');
+
+    if (fetchError) {
+      logSupabaseError('Wipe - fetch IDs', fetchError);
+      if (btn) { btn.textContent = '🗑 Reset All Goals'; btn.disabled = false; }
+      alert('Error fetching goals. Check console.');
+      return;
+    }
+
+    if (!allGoals || allGoals.length === 0) {
+      goals = [];
+      renderTracker();
+      renderPersonalDashboard();
+      if (btn) { btn.textContent = '🗑 Reset All Goals'; btn.disabled = false; }
+      showModal('✅', 'Already Empty', 'No goals to delete — you\'re starting fresh!');
+      return;
+    }
+
+    // Step 2: delete each goal by its exact UUID
+    const ids = allGoals.map(g => g.id);
+    const { error: deleteError } = await supabaseClient
       .from('goals')
       .delete()
-      .not('id', 'is', null);
-    if (error) {
-      logSupabaseError('Wipe all goals', error);
+      .in('id', ids);
+
+    if (deleteError) {
+      logSupabaseError('Wipe - delete by IDs', deleteError);
       if (btn) { btn.textContent = '🗑 Reset All Goals'; btn.disabled = false; }
       alert('Error deleting goals. Check console.');
       return;
     }
   }
 
-  // Clear local array too
+  // Clear local array
   goals = [];
   renderTracker();
   renderPersonalDashboard();
 
-  if (btn) { btn.textContent = '✓ Done!'; }
+  if (btn) { btn.textContent = '✓ Done!'; setTimeout(() => { if (btn) btn.textContent = '🗑 Reset All Goals'; btn.disabled = false; }, 3000); }
   showModal('✅', 'All Goals Cleared', 'Everyone starts fresh. Add your real goals now!');
   launchConfetti();
 }
