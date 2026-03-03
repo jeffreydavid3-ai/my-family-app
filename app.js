@@ -854,6 +854,38 @@ function renderSettings() {
   if (roleEl)   roleEl.textContent = m.role;
 }
 
+// ── WIPE ALL GOALS (run once to clear demo data from Supabase) ──
+async function wipeAllGoals() {
+  const confirmed = confirm('⚠️ This will permanently delete ALL goals for everyone. Are you sure?');
+  if (!confirmed) return;
+
+  const btn = document.getElementById('wipe-goals-btn');
+  if (btn) { btn.textContent = 'Deleting…'; btn.disabled = true; }
+
+  if (supabaseClient) {
+    // Delete every row in the goals table
+    const { error } = await supabaseClient
+      .from('goals')
+      .delete()
+      .neq('id', 0); // match all rows
+    if (error) {
+      logSupabaseError('Wipe all goals', error);
+      if (btn) { btn.textContent = '🗑 Reset All Goals'; btn.disabled = false; }
+      alert('Error deleting goals. Check console.');
+      return;
+    }
+  }
+
+  // Clear local array too
+  goals = [];
+  renderTracker();
+  renderPersonalDashboard();
+
+  if (btn) { btn.textContent = '✓ Done!'; }
+  showModal('✅', 'All Goals Cleared', 'Everyone starts fresh. Add your real goals now!');
+  launchConfetti();
+}
+
 function renderTrophyRoad(streak, currentLevel) {
   // Build the Clash Royale-style stacked steps path
   const html = trophyLevels.slice().reverse().map((lvl, revIdx) => {
