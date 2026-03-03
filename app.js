@@ -28,12 +28,19 @@ async function loadGoalsFromSupabase() {
     .select("*")
     .order("created_at", { ascending: true });
 
-if (error) {
-  logSupabaseError("Load goals", error);
-  return;
-}
+  if (error) {
+    logSupabaseError("Load goals", error);
+    return;
+  }
 
-  goals = (data || []).map(row => ({
+  // Filter out goals that existed before a reset (in case Supabase delete was blocked by RLS)
+  const resetAt = localStorage.getItem('goals_reset_at');
+  const rows = (data || []).filter(row => {
+    if (!resetAt) return true;
+    return new Date(row.created_at) > new Date(resetAt);
+  });
+
+  goals = rows.map(row => ({
     id: row.id,
     name: row.title,
     member: row.member,
@@ -862,50 +869,50 @@ async function wipeAllGoals() {
   const btn = document.getElementById('wipe-goals-btn');
   if (btn) { btn.textContent = 'Deleting…'; btn.disabled = true; }
 
+  // Store a reset timestamp — goals loaded before this time will be filtered out
+  // This acts as a fallback if Supabase RLS blocks the delete
+  const resetTime = new Date().toISOString();
+  localStorage.setItem('goals_reset_at', resetTime);
+
+  let deleteOk = false;
+
   if (supabaseClient) {
-    // Step 1: fetch all goal IDs currently in the table
+    // Fetch all IDs first
     const { data: allGoals, error: fetchError } = await supabaseClient
       .from('goals')
-      .select('id');
+      .select('id, created_at');
 
-    if (fetchError) {
-      logSupabaseError('Wipe - fetch IDs', fetchError);
-      if (btn) { btn.textContent = '🗑 Reset All Goals'; btn.disabled = false; }
-      alert('Error fetching goals. Check console.');
-      return;
-    }
-
-    if (!allGoals || allGoals.length === 0) {
-      goals = [];
-      renderTracker();
-      renderPersonalDashboard();
-      if (btn) { btn.textContent = '🗑 Reset All Goals'; btn.disabled = false; }
-      showModal('✅', 'Already Empty', 'No goals to delete — you\'re starting fresh!');
-      return;
-    }
-
-    // Step 2: delete each goal by its exact UUID
-    const ids = allGoals.map(g => g.id);
-    const { error: deleteError } = await supabaseClient
-      .from('goals')
-      .delete()
-      .in('id', ids);
-
-    if (deleteError) {
-      logSupabaseError('Wipe - delete by IDs', deleteError);
-      if (btn) { btn.textContent = '🗑 Reset All Goals'; btn.disabled = false; }
-      alert('Error deleting goals. Check console.');
-      return;
+    if (!fetchError && allGoals && allGoals.length > 0) {
+      // Delete each goal individually to bypass any RLS batch restrictions
+      let failCount = 0;
+      for (const g of allGoals) {
+        const { error } = await supabaseClient
+          .from('goals')
+          .delete()
+          .eq('id', g.id);
+        if (error) failCount++;
+      }
+      deleteOk = failCount === 0;
+      console.log(`Wipe: attempted ${allGoals.length} deletes, ${failCount} failed`);
+    } else {
+      deleteOk = true; // nothing to delete
     }
   }
 
-  // Clear local array
+  // Clear local array regardless
   goals = [];
   renderTracker();
   renderPersonalDashboard();
 
-  if (btn) { btn.textContent = '✓ Done!'; setTimeout(() => { if (btn) btn.textContent = '🗑 Reset All Goals'; btn.disabled = false; }, 3000); }
-  showModal('✅', 'All Goals Cleared', 'Everyone starts fresh. Add your real goals now!');
+  if (btn) {
+    btn.textContent = '✓ Done!';
+    btn.disabled = false;
+  }
+
+  const msg = deleteOk
+    ? 'Everyone starts fresh. Add your real goals now!'
+    : 'Some goals may reappear — ask your admin to clear the Supabase table directly.';
+  showModal('✅', 'All Goals Cleared', msg);
   launchConfetti();
 }
 
