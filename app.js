@@ -277,18 +277,7 @@ function logout() {
 }
 
 // ── APP DATA ──
-let goals = [
-  { id:1,  name:'Walk 10,000 steps',   cat:'fitness',  freq:'daily', member:'Dad',     done:true,  streak:5 },
-  { id:2,  name:'Morning Prayer',      cat:'spiritual',freq:'daily', member:'All',     done:true,  streak:7 },
-  { id:3,  name:'No Junk Food',        cat:'fitness',  freq:'daily', member:'Mom',     done:false, streak:3 },
-  { id:4,  name:'Track Spending',      cat:'finance',  freq:'daily', member:'All',     done:false, streak:2 },
-  { id:5,  name:'Read Bible',          cat:'spiritual',freq:'daily', member:'Zach',    done:true,  streak:4 },
-  { id:6,  name:'Save $10 Today',      cat:'finance',  freq:'daily', member:'Mom',     done:true,  streak:6 },
-  { id:7,  name:'Exercise 30 min',     cat:'fitness',  freq:'daily', member:'Berrett', done:false, streak:1 },
-  { id:8,  name:'Gratitude Journal',   cat:'spiritual',freq:'daily', member:'Jaxon',   done:false, streak:0 },
-  { id:9,  name:'No impulse buys',     cat:'finance',  freq:'daily', member:'Dad',     done:true,  streak:8 },
-  { id:10, name:'Family devotion',     cat:'spiritual',freq:'daily', member:'All',     done:true,  streak:7 },
-];
+let goals = []; // populated from Supabase on login
 
 // ── XP SYSTEM ──
 // Each completed daily goal = 10 XP. Max 30 XP/day per person (3 goals).
@@ -331,39 +320,33 @@ function getFamilyTotalXP() {
 }
 
 const leaderboardData = [
-  { name:'Dad',     xp: 2730, streak: 8 },
-  { name:'Zach',    xp: 2310, streak: 5 },
-  { name:'Mom',     xp: 2016, streak: 6 },
-  { name:'Berrett', xp: 1470, streak: 4 },
-  { name:'Jaxon',   xp:  990, streak: 3 },
+  { name:'Dad',     xp: 0, streak: 0 },
+  { name:'Zach',    xp: 0, streak: 0 },
+  { name:'Mom',     xp: 0, streak: 0 },
+  { name:'Berrett', xp: 0, streak: 0 },
+  { name:'Jaxon',   xp: 0, streak: 0 },
 ];
 
-const badges = [
-  { icon:'🔥', label:'7-Day Streak', who:'Family', bg:'rgba(233,168,37,0.15)', isNew:true },
-  { icon:'💪', label:'Fitness Week', who:'Dad', bg:'rgba(74,174,217,0.12)' },
-  { icon:'💰', label:'Saver', who:'Mom', bg:'rgba(34,197,94,0.12)', isNew:true },
-  { icon:'🙏', label:'Faithful', who:'Zach', bg:'rgba(155,89,182,0.15)' },
-  { icon:'⭐', label:'Perfect Day', who:'Berrett', bg:'rgba(233,168,37,0.12)' },
-  { icon:'🏅', label:'Month Strong', who:'Jaxon', bg:'rgba(74,174,217,0.1)' },
-];
+const badges = [];
 
 const personalData = {
-  Dad:     { xp:2730, streak:8,  bestStreak:14, goalsTotal:3, goalsDone:3, daysActive:28, successRate:91, badges:['🔥 7-Day Streak','💰 Saver','🏅 Month Strong','⭐ Perfect Day'] },
-  Mom:     { xp:2016, streak:6,  bestStreak:11, goalsTotal:3, goalsDone:2, daysActive:25, successRate:83, badges:['💰 Saver','🙏 Faithful'] },
-  Zach:    { xp:2310, streak:5,  bestStreak:9,  goalsTotal:3, goalsDone:3, daysActive:22, successRate:87, badges:['🙏 Faithful','⭐ Perfect Day'] },
-  Berrett: { xp:1470, streak:4,  bestStreak:7,  goalsTotal:3, goalsDone:1, daysActive:19, successRate:74, badges:['💪 Fitness Week'] },
-  Jaxon:   { xp: 990, streak:3,  bestStreak:6,  goalsTotal:3, goalsDone:0, daysActive:15, successRate:68, badges:['🔥 First Streak'] },
+  Dad:     { xp:0, streak:0, bestStreak:0, goalsTotal:0, goalsDone:0, daysActive:0, successRate:0, badges:[] },
+  Mom:     { xp:0, streak:0, bestStreak:0, goalsTotal:0, goalsDone:0, daysActive:0, successRate:0, badges:[] },
+  Zach:    { xp:0, streak:0, bestStreak:0, goalsTotal:0, goalsDone:0, daysActive:0, successRate:0, badges:[] },
+  Berrett: { xp:0, streak:0, bestStreak:0, goalsTotal:0, goalsDone:0, daysActive:0, successRate:0, badges:[] },
+  Jaxon:   { xp:0, streak:0, bestStreak:0, goalsTotal:0, goalsDone:0, daysActive:0, successRate:0, badges:[] },
 };
 
 const personalCats = {
-  Dad:     { fitness:90, finance:95, spiritual:100 },
-  Mom:     { fitness:70, finance:88, spiritual:90 },
-  Zach:    { fitness:85, finance:75, spiritual:100 },
-  Berrett: { fitness:60, finance:80, spiritual:85 },
-  Jaxon:   { fitness:50, finance:70, spiritual:80 },
+  Dad:     { fitness:0, finance:0, spiritual:0 },
+  Mom:     { fitness:0, finance:0, spiritual:0 },
+  Zach:    { fitness:0, finance:0, spiritual:0 },
+  Berrett: { fitness:0, finance:0, spiritual:0 },
+  Jaxon:   { fitness:0, finance:0, spiritual:0 },
 };
 
-let currentCatFilter = 'all', selectedCat = 'fitness', selectedFreq = 'daily';
+let currentCatFilter = 'all'; // category filter removed from UI
+let selectedCat = 'fitness', selectedFreq = 'daily';
 
 let selectedMembers = new Set(['All']);   // used on Add Goal screen
 let selectedMember = 'Dad';              // used on Personal Dashboard tabs
@@ -375,7 +358,6 @@ async function initApp() {
   await loadGoalsFromSupabase();
   planViewMember = loggedInUser;
   renderLeaderboard();
-  renderBadges();
   renderPlanMemberTabs();
   renderTracker();
   renderAddForm();
@@ -404,7 +386,40 @@ function renderPlanMemberTabs() {
 function selectPlanMember(m) {
   planViewMember = m;
   renderPlanMemberTabs();
-  renderTracker();
+  renderFamilyGoalList();
+}
+
+let familyGoalsPanelOpen = false;
+
+function toggleFamilyGoalsPanel() {
+  familyGoalsPanelOpen = !familyGoalsPanelOpen;
+  const panel = document.getElementById('family-goals-panel');
+  const arrow = document.getElementById('family-goals-arrow');
+  if (panel) panel.style.display = familyGoalsPanelOpen ? 'block' : 'none';
+  if (arrow) arrow.style.transform = familyGoalsPanelOpen ? 'rotate(180deg)' : '';
+  if (familyGoalsPanelOpen) {
+    renderPlanMemberTabs();
+    renderFamilyGoalList();
+  }
+}
+
+function renderFamilyGoalList() {
+  const el = document.getElementById('family-goal-list');
+  if (!el) return;
+  const member = planViewMember || loggedInUser;
+  const filtered = goals.filter(g => g.member === member || g.member === 'All');
+  const ci = {fitness:'💪', finance:'💰', spiritual:'🙏'};
+  el.innerHTML = filtered.length
+    ? filtered.map(g => `
+        <div class="goal-card" style="opacity:0.85;">
+          <div style="flex:1;">
+            <div style="font-weight:600;font-size:13px;${g.done?'text-decoration:line-through;opacity:0.4;':''}">${g.name}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px;">${ci[g.cat]||''} ${g.cat} · ${g.freq}</div>
+          </div>
+          <div class="check-btn ${g.done?'done':''}" style="opacity:0.5;cursor:default;">${g.done?'✓':''}</div>
+        </div>
+      `).join('')
+    : `<div style="color:var(--muted);font-size:12px;padding:12px 0;text-align:center;">${member} has no goals yet.</div>`;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -451,6 +466,14 @@ function showPage(id) {
   if (id === 'goals') {
     toggleAddGoalForm(false); // always start on list view
     renderAddForm();
+    // reset family panel
+    familyGoalsPanelOpen = false;
+    const fp = document.getElementById('family-goals-panel');
+    const fa = document.getElementById('family-goals-arrow');
+    if (fp) fp.style.display = 'none';
+    if (fa) fa.style.transform = '';
+    // render own goals
+    renderTracker();
   }
 
   document.querySelector('.main').scrollTop = 0;
@@ -474,61 +497,60 @@ function getMemberLevel(name) {
 }
 
 function renderLeaderboard(){
-  // Sort leaderboard by XP descending
   const sorted = [...leaderboardData].sort((a,b) => b.xp - a.xp);
-  const sym = ['🥈','🥉','4️⃣','5️⃣'];
-  const bg  = ['linear-gradient(135deg,#5A6472,#8A9CB0)','linear-gradient(135deg,#6B3A1F,#A0622A)','linear-gradient(135deg,#1F2E4A,#253660)','linear-gradient(135deg,#1F2E4A,#253660)'];
 
-  const first = sorted[0];
-  const rest  = sorted.slice(1);
-  const firstLevel = getMemberLevel(first.name);
-  const firstBonus = getStreakBonus(first.streak);
+  const bgColors = [
+    'linear-gradient(135deg,#7A5500,#C8900A)',   // #1 gold
+    'linear-gradient(135deg,#4A5360,#7A8C9E)',   // #2 silver
+    'linear-gradient(135deg,#5C3015,#8B5020)',   // #3 bronze
+    'linear-gradient(135deg,#1F2E4A,#253660)',   // #4
+    'linear-gradient(135deg,#1F2E4A,#253660)',   // #5
+  ];
 
-  const firstHtml = `
-    <div style="background:linear-gradient(135deg,#8B6000,#E9A825,#FFD700);border-radius:16px;padding:16px 15px 14px;color:white;margin-bottom:8px;box-shadow:0 0 22px rgba(233,168,37,0.5),0 4px 16px rgba(0,0,0,0.4);">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <div style="font-size:22px;flex-shrink:0;">🥇</div>
-        <div style="flex-shrink:0;">${getLevelBadgeSVG(firstLevel, 44)}</div>
-        <div style="flex:1;min-width:0;">
-          <div style="position:relative;display:inline-block;">
-            <div style="font-size:18px;line-height:1;position:absolute;top:-20px;left:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.4));">👑</div>
-            <div style="font-weight:800;font-size:15px;margin-bottom:2px;padding-top:2px;">${first.name}</div>
-          </div>
-          <div style="font-size:9px;opacity:0.8;margin-bottom:4px;">${trophyLevels[firstLevel-1].name}</div>
-          <div style="background:rgba(0,0,0,0.2);border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700;display:inline-block;">🔥 ${first.streak} day streak</div>
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
-          <div style="font-family:'Lexend',sans-serif;font-size:20px;font-weight:800;line-height:1;">${first.xp.toLocaleString()}</div>
-          <div style="font-size:9px;opacity:0.75;font-weight:600;letter-spacing:0.5px;">TOTAL XP</div>
-          ${firstBonus.multiplier > 1 ? `<div style="background:rgba(0,0,0,0.25);border-radius:8px;padding:2px 7px;font-size:10px;font-weight:700;color:${firstBonus.color};">⚡ ${firstBonus.label} bonus</div>` : ''}
-        </div>
-      </div>
-    </div>
-  `;
-
-  const restHtml = rest.map((m,i) => {
-    const lvl = getMemberLevel(m.name);
+  const allHtml = sorted.map((m, i) => {
+    const lvl   = getMemberLevel(m.name);
     const bonus = getStreakBonus(m.streak);
+    const isFirst = i === 0;
     return `
-      <div style="background:${bg[i]};border-radius:12px;padding:10px 13px;color:white;display:flex;align-items:center;gap:10px;margin-bottom:7px;cursor:pointer;transition:transform 0.2s;" onmouseover="this.style.transform='translateX(3px)'" onmouseout="this.style.transform=''">
-        <div style="font-size:16px;flex-shrink:0;">${sym[i]}</div>
-        <div style="flex-shrink:0;">${getLevelBadgeSVG(lvl, 34)}</div>
+      <div style="
+        background:${bgColors[i] || bgColors[4]};
+        border-radius:${isFirst ? '16px' : '12px'};
+        padding:${isFirst ? '15px 14px' : '10px 13px'};
+        color:white; display:flex; align-items:center; gap:10px;
+        margin-bottom:${isFirst ? '10px' : '7px'};
+        ${isFirst ? 'box-shadow:0 0 20px rgba(200,144,10,0.4),0 4px 16px rgba(0,0,0,0.4);' : ''}
+        transition:transform 0.15s;
+      " onmouseover="this.style.transform='translateX(3px)'" onmouseout="this.style.transform=''">
+        <div style="
+          width:${isFirst ? '30px' : '26px'};
+          height:${isFirst ? '30px' : '26px'};
+          border-radius:50%;
+          background:rgba(255,255,255,0.15);
+          border:1.5px solid rgba(255,255,255,0.25);
+          display:flex;align-items:center;justify-content:center;
+          font-family:'Lexend',sans-serif;
+          font-size:${isFirst ? '15px' : '12px'};
+          font-weight:800; flex-shrink:0;
+        ">${i + 1}</div>
+        <div style="flex-shrink:0;">${getLevelBadgeSVG(lvl, isFirst ? 42 : 34)}</div>
         <div style="flex:1;min-width:0;">
-          <div style="font-weight:700;font-size:12px;margin-bottom:1px;">${m.name}</div>
+          <div style="font-weight:800;font-size:${isFirst ? '15px' : '13px'};margin-bottom:2px;">${m.name}</div>
           <div style="font-size:9px;opacity:0.65;margin-bottom:3px;">${trophyLevels[lvl-1].name}</div>
-          <div style="background:rgba(0,0,0,0.22);border-radius:20px;padding:2px 7px;font-size:10px;font-weight:700;display:inline-block;">🔥 ${m.streak} day streak</div>
+          <div style="background:rgba(0,0,0,0.2);border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700;display:inline-block;">🔥 ${m.streak} day streak</div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;">
-          <div style="font-family:'Lexend',sans-serif;font-size:16px;font-weight:700;line-height:1;">${m.xp.toLocaleString()}</div>
-          <div style="font-size:9px;opacity:0.65;font-weight:600;letter-spacing:0.4px;">XP</div>
+          <div style="font-family:'Lexend',sans-serif;font-size:${isFirst ? '20px' : '16px'};font-weight:800;line-height:1;">${m.xp.toLocaleString()}</div>
+          <div style="font-size:9px;opacity:0.6;font-weight:600;letter-spacing:0.4px;">XP</div>
           ${bonus.multiplier > 1 ? `<div style="background:rgba(0,0,0,0.25);border-radius:8px;padding:1px 6px;font-size:9px;font-weight:700;color:${bonus.color};">⚡ ${bonus.label}</div>` : ''}
         </div>
       </div>
     `;
   }).join('');
 
-  document.getElementById('leaderboard').innerHTML = `<div style="padding-top:12px;">${firstHtml}${restHtml}</div>`;
+  document.getElementById('leaderboard').innerHTML = `<div style="padding-top:8px;">${allHtml}</div>`;
 }
+
+
 
 // ── BADGES (row style) ──
 function renderBadges(){
@@ -550,32 +572,32 @@ function filterCat(el,cat){
 }
 
 function renderTracker(){
-  const filtered=goals.filter(g=>{
-    const memberOk = g.member===planViewMember || g.member==='All';
-    const catOk = currentCatFilter==='all' || g.cat===currentCatFilter;
-    return memberOk && catOk;
-  });
-  const done=filtered.filter(g=>g.done).length;
+  const filtered = goals.filter(g =>
+    g.member === planViewMember || g.member === 'All'
+  );
+  const done = filtered.filter(g => g.done).length;
   const isViewingOwn = planViewMember === loggedInUser;
-  document.getElementById('tracker-summary').textContent=`${done}/${filtered.length} completed today${!isViewingOwn?' · Viewing '+planViewMember+"'s plan":''}`;
-  const ci={fitness:'💪',finance:'💰',spiritual:'🙏'};
-  document.getElementById('goal-list').innerHTML=filtered.map(g=>{
+  const summaryEl = document.getElementById('tracker-summary');
+  if (summaryEl) summaryEl.textContent = `${done}/${filtered.length} completed today${!isViewingOwn ? ' · Viewing ' + planViewMember + "'s plan" : ''}`;
+  const ci = {fitness:'💪', finance:'💰', spiritual:'🙏'};
+  document.getElementById('goal-list').innerHTML = filtered.map(g => {
     const canToggle = isViewingOwn;
-    const canEdit   = isViewingOwn && g.member !== 'All'; // only edit your own personal goals
+    const canEdit   = isViewingOwn && g.member !== 'All';
     return `
-      <div class="goal-card ${g.done?'completed':''}" style="position:relative;">
-        <div style="flex:1;cursor:${canToggle?'pointer':'default'};" onclick="${canToggle?`toggleGoal('${g.id}')`:''}" >
+      <div class="goal-card ${g.done ? 'completed' : ''}" style="position:relative;">
+        <div style="flex:1;cursor:${canToggle?'pointer':'default'};" onclick="${canToggle ? `toggleGoal('${g.id}')` : ''}">
           <div style="font-weight:600;font-size:13px;${g.done?'text-decoration:line-through;opacity:0.4;':''}">${g.name}</div>
           <div style="font-size:10px;color:var(--muted);margin-top:2px;">${ci[g.cat]} ${g.cat.charAt(0).toUpperCase()+g.cat.slice(1)} · ${g.freq}</div>
         </div>
         ${canEdit ? `
           <button onclick="event.stopPropagation(); openEditForm('${g.id}')" style="background:rgba(74,174,217,0.15);border:1.5px solid rgba(74,174,217,0.4);border-radius:10px;padding:7px 13px;color:var(--blue);font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0;font-family:'Lexend',sans-serif;min-width:44px;min-height:36px;">✏️</button>
         ` : ''}
-        <div class="check-btn ${g.done?'done':''}" onclick="${canToggle?`toggleGoal('${g.id}')`:''}  " ${!canToggle?'style="opacity:0.3;cursor:default;"':''}>${g.done?'✓':''}</div>
+        <div class="check-btn ${g.done ? 'done' : ''}" onclick="${canToggle ? `toggleGoal('${g.id}')` : ''}" ${!canToggle ? 'style="opacity:0.3;cursor:default;"' : ''}>${g.done ? '✓' : ''}</div>
       </div>
     `;
-  }).join('')||'<div style="text-align:center;color:var(--muted);padding:32px;font-size:13px;">No goals found.</div>';
+  }).join('') || '<div style="text-align:center;color:var(--muted);padding:32px;font-size:13px;">No goals yet — tap ＋ Add New Goal below!</div>';
 }
+
 
 function showLockedMsg(){ showModal('🔒','Not Your Goal',"You can only check off your own goals."); }
 
@@ -797,24 +819,10 @@ function renderCalendar(){
 
 // ── HISTORY ──
 function renderHistory(){
-  const entries=[
-    {date:'Today',name:'Morning Prayer',who:'All',done:true},
-    {date:'Today',name:'Walk 10,000 steps',who:'Dad',done:true},
-    {date:'Today',name:'Save $10 Today',who:'Mom',done:true},
-    {date:'Yesterday',name:'No Junk Food',who:'Mom',done:false},
-    {date:'Yesterday',name:'Read Bible',who:'Zach',done:true},
-    {date:'2 days ago',name:'Gratitude Journal',who:'Jaxon',done:false},
-    {date:'2 days ago',name:'Exercise 30 min',who:'Berrett',done:true},
-  ];
-  document.getElementById('history-log').innerHTML=entries.map(e=>`
-    <div class="history-entry">
-      <div style="width:6px;height:6px;border-radius:50%;background:${e.done?'#22C55E':'var(--coral)'};flex-shrink:0;"></div>
-      <div class="history-date">${e.date}</div>
-      <div class="history-name">${e.name}</div>
-      <div class="history-who" style="color:${memberColor(e.who)}">${e.who}</div>
-      <div>${e.done?'✅':'❌'}</div>
-    </div>
-  `).join('');
+  // History will be built from real goal completion data (Supabase)
+  // For now show an empty state — activity will appear as goals are completed
+  document.getElementById('history-log').innerHTML =
+    '<div style="color:var(--muted);font-size:12px;padding:12px 0;">No recent activity yet — start checking off goals!</div>';
 }
 
 function renderProfile() {
@@ -1052,17 +1060,19 @@ function renderNotifications(){
 
 // ── PERSONAL DASHBOARD ──
 function renderPersonalDashboard(){
-  // Dashboard always shows the logged-in user's own data
   const activeMember = loggedInUser || selectedMember;
-
-  const d=personalData[activeMember],cats=personalCats[activeMember];
+  const d = personalData[activeMember] || { xp:0, streak:0, bestStreak:0, goalsTotal:0, goalsDone:0, daysActive:0 };
   const m = getMember(activeMember);
   const color = m.color;
   const emoji = m.emoji;
-  const rank=leaderboardData.findIndex(x=>x.name===activeMember)+1;
-  const rl=['🥇 #1','🥈 #2','🥉 #3','#4','#5'][rank-1];
+  const rank = leaderboardData.findIndex(x => x.name === activeMember) + 1;
+  const rl = ['#1','#2','#3','#4','#5'][rank - 1] || '#?';
+  const streak = d.streak || 0;
+  const currentLevel = Math.min(Math.floor(streak / 7) + 1, 8);
+  const levelInfo = trophyLevels[currentLevel - 1];
 
-  document.getElementById('personal-hero').innerHTML=`
+  // Hero card
+  document.getElementById('personal-hero').innerHTML = `
     <div style="background:linear-gradient(135deg,${color}BB,${color}55);border-radius:16px;padding:16px 18px;color:white;display:flex;align-items:center;gap:14px;border:1px solid ${color}30;">
       <div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">${emoji}</div>
       <div style="flex:1;">
@@ -1075,24 +1085,42 @@ function renderPersonalDashboard(){
       </div>
       <div style="text-align:center;background:rgba(20,12,0,0.4);border:2px solid rgba(255,120,0,0.8);border-radius:16px;padding:12px 16px;flex-shrink:0;box-shadow:0 0 18px rgba(255,100,0,0.5),0 0 40px rgba(255,80,0,0.2),inset 0 0 16px rgba(255,100,0,0.07);">
         <div style="font-size:28px;line-height:1;margin-bottom:4px;filter:drop-shadow(0 0 10px rgba(255,140,0,0.9));">🔥</div>
-        <div style="font-family:'Lexend',sans-serif;font-size:32px;font-weight:800;color:#FFD700;line-height:1;margin-bottom:3px;text-shadow:0 0 16px rgba(255,200,0,0.5);">${d.streak}</div>
+        <div style="font-family:'Lexend',sans-serif;font-size:32px;font-weight:800;color:#FFD700;line-height:1;margin-bottom:3px;text-shadow:0 0 16px rgba(255,200,0,0.5);">${streak}</div>
         <div style="font-size:9px;font-weight:500;letter-spacing:0.8px;color:rgba(255,180,80,0.75);">day streak</div>
       </div>
     </div>
   `;
 
-  document.getElementById('personal-stats').innerHTML=`
-    <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-label">Today</div><div class="stat-value">${d.goalsDone}/${d.goalsTotal}</div><div class="stat-sub">${d.goalsDone===d.goalsTotal?'🎉 Perfect!':d.goalsTotal-d.goalsDone+' left'}</div></div>
-    <div class="stat-card"><div class="stat-icon">📅</div><div class="stat-label">Active Days</div><div class="stat-value">${d.daysActive}</div><div class="stat-sub">this month</div></div>
-    <div class="stat-card"><div class="stat-icon">🎯</div><div class="stat-label">Success</div><div class="stat-value">${d.successRate}%</div><div class="stat-sub">all-time</div></div>
+  // Stats row: Today | Active Days | Badge Level (tappable → Rise Road)
+  const todaySub = d.goalsTotal === 0 ? 'No goals yet' : d.goalsDone === d.goalsTotal ? '🎉 Perfect!' : (d.goalsTotal - d.goalsDone) + ' left';
+  document.getElementById('personal-stats').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-icon">✅</div>
+      <div class="stat-label">Today</div>
+      <div class="stat-value">${d.goalsDone}/${d.goalsTotal}</div>
+      <div class="stat-sub">${todaySub}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📅</div>
+      <div class="stat-label">Active Days</div>
+      <div class="stat-value">${d.daysActive}</div>
+      <div class="stat-sub">this month</div>
+    </div>
+    <div class="stat-card" style="cursor:pointer;" onclick="showPage('riseroad')">
+      <div style="display:flex;justify-content:center;margin-bottom:2px;">${getLevelBadgeSVG(currentLevel, 28)}</div>
+      <div class="stat-label">Badge Level</div>
+      <div class="stat-value" style="font-size:15px;">${currentLevel}</div>
+      <div class="stat-sub" style="font-size:9px;line-height:1.2;">${levelInfo.name}</div>
+    </div>
   `;
 
-  const myGoals=goals.filter(g=>g.member===activeMember||g.member==='All');
-  document.getElementById('personal-streaks').innerHTML=myGoals.length?`
-    <div style="display:flex;flex-direction:column;gap:9px;">${myGoals.map(g=>{
-      const fp=Math.min(g.streak*10,100);
-      const fb=g.streak>=7?'rgba(233,168,37,0.15)':g.streak>=3?'rgba(233,168,37,0.08)':'rgba(255,255,255,0.04)';
-      const fc=g.streak>=7?'var(--gold)':g.streak>=3?'#D97706':'var(--muted)';
+  // My Goal Streaks (renamed from Active Streaks)
+  const myGoals = goals.filter(g => g.member === activeMember || g.member === 'All');
+  document.getElementById('personal-streaks').innerHTML = myGoals.length ? `
+    <div style="display:flex;flex-direction:column;gap:9px;">${myGoals.map(g => {
+      const fp = Math.min((g.streak || 0) * 10, 100);
+      const fb = g.streak >= 7 ? 'rgba(233,168,37,0.15)' : g.streak >= 3 ? 'rgba(233,168,37,0.08)' : 'rgba(255,255,255,0.04)';
+      const fc = g.streak >= 7 ? 'var(--gold)' : g.streak >= 3 ? '#D97706' : 'var(--muted)';
       return `<div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:11px 13px;display:flex;align-items:center;gap:10px;">
         <div style="font-size:18px;">${g.cat==='fitness'?'💪':g.cat==='finance'?'💰':'🙏'}</div>
         <div style="flex:1;min-width:0;">
@@ -1100,33 +1128,13 @@ function renderPersonalDashboard(){
           <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${fp}%;background:${color};"></div></div>
         </div>
         <div style="background:${fb};border-radius:10px;padding:5px 9px;text-align:center;flex-shrink:0;border:1px solid ${g.streak>0?fc+'44':'transparent'};">
-          <div style="font-size:${g.streak>=7?'18px':g.streak>=3?'15px':'12px'};line-height:1;">${g.streak>0?'🔥':'—'}</div>
-          <div style="font-family:'Lexend',sans-serif;font-size:16px;font-weight:700;color:${g.streak>0?fc:'var(--muted)'};">${g.streak}</div>
+          <div style="font-size:${(g.streak||0)>=7?'18px':(g.streak||0)>=3?'15px':'12px'};line-height:1;">${(g.streak||0)>0?'🔥':'—'}</div>
+          <div style="font-family:'Lexend',sans-serif;font-size:16px;font-weight:700;color:${(g.streak||0)>0?fc:'var(--muted)'};">${g.streak||0}</div>
           <div style="font-size:8px;color:var(--muted);">days</div>
         </div>
       </div>`;
     }).join('')}</div>
-  `:'<div style="color:var(--muted);font-size:12px;padding:8px 0;">No goals yet.</div>';
-
-  document.getElementById('personal-categories').innerHTML=`
-    <div style="display:flex;flex-direction:column;gap:11px;">
-      <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>💪 Fitness</span><strong>${cats.fitness}%</strong></div><div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${cats.fitness}%;background:linear-gradient(90deg,#4A3880,#7B5EA7);"></div></div></div>
-      <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>💰 Finance</span><strong>${cats.finance}%</strong></div><div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${cats.finance}%;background:linear-gradient(90deg,#1A5C54,#2D8C80);"></div></div></div>
-      <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>🙏 Spiritual</span><strong>${cats.spiritual}%</strong></div><div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${cats.spiritual}%;background:linear-gradient(90deg,#7A1F35,#A8384F);"></div></div></div>
-    </div>
-  `;
-
-  document.getElementById('personal-goals').innerHTML=myGoals.map(g=>`
-    <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);">
-      <div style="width:28px;height:28px;border-radius:50%;background:${g.done?color:'var(--bg3)'};display:flex;align-items:center;justify-content:center;color:white;font-size:12px;flex-shrink:0;border:1px solid ${g.done?color:'var(--border)'};">${g.done?'✓':''}</div>
-      <div style="flex:1;"><div style="font-weight:600;font-size:12px;${g.done?'text-decoration:line-through;opacity:0.4;':''}">${g.name}</div><div style="font-size:10px;color:var(--muted);">${g.cat} · ${g.freq}</div></div>
-      ${g.streak>0?`<div class="streak-chip">🔥 ${g.streak}d</div>`:''}
-    </div>
-  `).join('');
-
-  document.getElementById('personal-badges').innerHTML=d.badges.length
-    ?`<div style="display:flex;flex-wrap:wrap;gap:7px;">${d.badges.map(b=>`<div style="background:${color}18;border:1px solid ${color}40;border-radius:10px;padding:7px 11px;font-size:12px;font-weight:500;">${b}</div>`).join('')}</div>`
-    :'<div style="color:var(--muted);font-size:12px;">No badges yet — keep going!</div>';
+  ` : '<div style="color:var(--muted);font-size:12px;padding:8px 0;">No goals yet — add some on the My Goals page!</div>';
 }
 
 function selectPersonalMember(m){selectedMember=m;renderPersonalDashboard();}
