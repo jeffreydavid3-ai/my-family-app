@@ -863,11 +863,11 @@ async function wipeAllGoals() {
   if (btn) { btn.textContent = 'Deleting…'; btn.disabled = true; }
 
   if (supabaseClient) {
-    // Delete every row in the goals table
+    // Delete every row — use a filter that always matches (id is not null)
     const { error } = await supabaseClient
       .from('goals')
       .delete()
-      .neq('id', 0); // match all rows
+      .not('id', 'is', null);
     if (error) {
       logSupabaseError('Wipe all goals', error);
       if (btn) { btn.textContent = '🗑 Reset All Goals'; btn.disabled = false; }
