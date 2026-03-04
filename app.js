@@ -886,22 +886,118 @@ function renderHistory(){
     '<div style="color:var(--muted);font-size:12px;padding:12px 0;">No recent activity yet — start checking off goals!</div>';
 }
 
+let myRoadOpen    = false;
+let familyRoadOpen = false;
+
 function renderProfile() {
   if (!loggedInUser) return;
 
   const m = getMember(loggedInUser);
   const d = personalData[loggedInUser] || { streak: 0 };
-  const streak = d.streak || 0;
-
+  const streak  = d.streak || 0;
   const currentLevel = Math.min(Math.floor(streak / 7) + 1, 8);
-  const levelInfo = trophyLevels[currentLevel - 1];
+  const levelInfo    = trophyLevels[currentLevel - 1];
+  const color = m.color;
 
-  document.getElementById('profile-name').textContent = `${m.emoji} ${loggedInUser}`;
-  document.getElementById('profile-trophy-icon').innerHTML = getLevelBadgeSVG(currentLevel);
-  document.getElementById('profile-level-name').textContent = `Level ${currentLevel} · ${levelInfo.name}`;
-  document.getElementById('profile-streak-line').textContent = '🔥 ' + streak + ' day streak';
+  // ── My Road summary card ──
+  const myRoadEl = document.getElementById('my-road-summary');
+  if (myRoadEl) {
+    myRoadEl.innerHTML = `
+      <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.6px;margin-bottom:10px;">MY ROAD</div>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="flex-shrink:0;filter:drop-shadow(0 0 12px ${color}88);">
+          ${getLevelBadgeSVG(currentLevel, 56)}
+        </div>
+        <div style="flex:1;">
+          <div style="font-family:'Lexend',sans-serif;font-size:20px;font-weight:800;color:white;margin-bottom:2px;">${levelInfo.name}</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Level ${currentLevel} of ${trophyLevels.length}</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="background:rgba(255,120,0,0.15);border:1px solid rgba(255,120,0,0.4);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;color:#FFD700;">
+              🔥 ${streak} day streak
+            </div>
+            ${streak < currentLevel * 7 ? `<div style="font-size:10px;color:var(--muted);">${currentLevel * 7 - streak} days to next</div>` : '<div style="font-size:10px;color:#22C55E;font-weight:700;">✓ Level complete!</div>'}
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:3px;">Progress</div>
+          <div style="font-family:'Lexend',sans-serif;font-size:18px;font-weight:800;color:${color};">${streak % 7}/7</div>
+          <div style="width:50px;height:5px;background:rgba(255,255,255,0.1);border-radius:100px;overflow:hidden;margin-top:4px;">
+            <div style="width:${Math.round((streak % 7) / 7 * 100)}%;height:100%;background:${color};border-radius:100px;transition:width 0.8s ease;"></div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
 
-  renderTrophyRoad(streak, currentLevel);
+  // ── Family Road summary card ──
+  renderFamilyRoadSummary();
+
+  // Re-render expanded views if open
+  if (myRoadOpen)    renderTrophyRoad(streak, currentLevel);
+  if (familyRoadOpen) renderFamilyArena();
+}
+
+function toggleMyRoad() {
+  const m = getMember(loggedInUser);
+  const d = personalData[loggedInUser] || { streak: 0 };
+  const streak = d.streak || 0;
+  const currentLevel = Math.min(Math.floor(streak / 7) + 1, 8);
+
+  myRoadOpen = !myRoadOpen;
+  const el    = document.getElementById('trophy-road-content');
+  const arrow = document.getElementById('my-road-arrow');
+  const label = document.getElementById('my-road-btn-label');
+  if (el)    el.style.display = myRoadOpen ? 'block' : 'none';
+  if (arrow) arrow.style.transform = myRoadOpen ? 'rotate(180deg)' : '';
+  if (label) label.textContent = myRoadOpen ? 'Collapse' : 'View Full Road';
+  if (myRoadOpen) renderTrophyRoad(streak, currentLevel);
+}
+
+function toggleFamilyRoad() {
+  familyRoadOpen = !familyRoadOpen;
+  const el    = document.getElementById('family-arena-section');
+  const arrow = document.getElementById('family-road-arrow');
+  const label = document.getElementById('family-road-btn-label');
+  if (el)    el.style.display = familyRoadOpen ? 'block' : 'none';
+  if (arrow) arrow.style.transform = familyRoadOpen ? 'rotate(180deg)' : '';
+  if (label) label.textContent = familyRoadOpen ? 'Collapse' : 'View Full Arena Road';
+  if (familyRoadOpen) renderFamilyArena();
+}
+
+function renderFamilyRoadSummary() {
+  const el = document.getElementById('family-road-summary');
+  if (!el) return;
+  const totalXP  = getFamilyTotalXP();
+  const current  = getFamilyArena(totalXP);
+  const nextArena = familyArenas.find(a => a.arena === current.arena + 1);
+  const xpToNext  = nextArena ? (nextArena.minXP - totalXP) : 0;
+  const xpInto    = totalXP - current.minXP;
+  const arenaRange = nextArena ? (current.maxXP - current.minXP + 1) : 1;
+  const pct = nextArena ? Math.min((xpInto / arenaRange) * 100, 100) : 100;
+
+  el.innerHTML = `
+    <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.6px;margin-bottom:10px;">FAMILY ROAD</div>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div style="font-size:48px;flex-shrink:0;filter:drop-shadow(0 0 14px ${current.color});">${current.icon}</div>
+      <div style="flex:1;">
+        <div style="font-family:'Lexend',sans-serif;font-size:20px;font-weight:800;color:white;margin-bottom:2px;">${current.name}</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Arena ${current.arena} of ${familyArenas.length}</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="background:${current.color}22;border:1px solid ${current.color}55;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;color:${current.color};">
+            ${totalXP.toLocaleString()} XP
+          </div>
+          ${nextArena ? `<div style="font-size:10px;color:var(--muted);">${xpToNext.toLocaleString()} to next</div>` : '<div style="font-size:10px;color:#22C55E;font-weight:700;">🏆 Max Arena!</div>'}
+        </div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:3px;">Progress</div>
+        <div style="font-family:'Lexend',sans-serif;font-size:18px;font-weight:800;color:${current.color};">${Math.round(pct)}%</div>
+        <div style="width:50px;height:5px;background:rgba(255,255,255,0.1);border-radius:100px;overflow:hidden;margin-top:4px;">
+          <div style="width:${pct}%;height:100%;background:${current.color};border-radius:100px;transition:width 0.8s ease;"></div>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 function renderSettings() {
@@ -1047,8 +1143,6 @@ function renderTrophyRoad(streak, currentLevel) {
     </div>
   `;
 
-  // Render Family Arena section below the trophy road
-  renderFamilyArena();
 }
 
 function renderFamilyArena() {
@@ -1099,10 +1193,7 @@ function renderFamilyArena() {
   }).join('');
 
   el.innerHTML = `
-    <div class="card" style="margin-top:18px;margin-bottom:18px;">
-      <div class="section-title" style="margin-bottom:4px;">🏟️ Family Rise Arena</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:14px;">Family XP accumulates across all members and never resets.</div>
-
+    <div class="card" style="margin-bottom:14px;">
       <!-- Current arena hero -->
       <div style="background:${current.bg};border-radius:14px;padding:16px;margin-bottom:14px;border:1px solid ${current.color}44;box-shadow:0 0 24px ${current.color}22;">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">

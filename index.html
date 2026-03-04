@@ -197,14 +197,27 @@
 
       <!-- ══ RISE ROAD ══ -->
       <div class="content" id="page-riseroad">
-        <div id="profile-header" class="card" style="margin-bottom:14px;text-align:center;padding:20px 16px;">
-          <div id="profile-trophy-icon" style="margin-bottom:6px;filter:drop-shadow(0 0 12px rgba(180,80,255,0.6));display:inline-block;"></div>
-          <div id="profile-name" style="font-size:20px;font-weight:800;margin-bottom:2px;"></div>
-          <div id="profile-level-name" style="font-size:12px;color:var(--muted);margin-bottom:2px;"></div>
-          <div id="profile-streak-line" style="font-size:11px;color:var(--gold);font-weight:600;"></div>
+        <!-- My Road summary card -->
+        <div class="card" style="margin-bottom:12px;">
+          <div id="my-road-summary"></div>
+          <button onclick="toggleMyRoad()" id="my-road-toggle-btn" style="width:100%;margin-top:12px;padding:10px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:12px;color:var(--muted);font-family:'Lexend',sans-serif;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <span id="my-road-btn-label">View Full Road</span>
+            <span id="my-road-arrow" style="transition:transform 0.25s;">▼</span>
+          </button>
         </div>
-        <div id="trophy-road-content"></div>
-        <div id="family-arena-section"></div>
+        <!-- My Road expanded -->
+        <div id="trophy-road-content" style="display:none;"></div>
+
+        <!-- Family Road summary card -->
+        <div class="card" style="margin-bottom:12px;">
+          <div id="family-road-summary"></div>
+          <button onclick="toggleFamilyRoad()" id="family-road-toggle-btn" style="width:100%;margin-top:12px;padding:10px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:12px;color:var(--muted);font-family:'Lexend',sans-serif;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <span id="family-road-btn-label">View Full Arena Road</span>
+            <span id="family-road-arrow" style="transition:transform 0.25s;">▼</span>
+          </button>
+        </div>
+        <!-- Family Road expanded -->
+        <div id="family-arena-section" style="display:none;"></div>
       </div><!-- end page-riseroad -->
 
       <!-- ══ SETTINGS ══ -->
