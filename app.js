@@ -903,7 +903,11 @@ function renderProfile() {
   const myRoadEl = document.getElementById('my-road-summary');
   if (myRoadEl) {
     myRoadEl.innerHTML = `
-      <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.6px;margin-bottom:10px;">MY ROAD</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+        <div style="width:3px;height:20px;background:#4AAED9;border-radius:2px;flex-shrink:0;"></div>
+        <div style="font-family:'Lexend',sans-serif;font-size:16px;font-weight:800;color:#4AAED9;letter-spacing:0.3px;">My Road</div>
+        <div style="margin-left:auto;font-size:10px;font-weight:600;color:rgba(74,174,217,0.6);letter-spacing:0.4px;">PERSONAL</div>
+      </div>
       <div style="display:flex;align-items:center;gap:14px;">
         <div style="flex-shrink:0;filter:drop-shadow(0 0 12px ${color}88);">
           ${getLevelBadgeSVG(currentLevel, 56)}
@@ -915,7 +919,7 @@ function renderProfile() {
             <div style="background:rgba(255,120,0,0.15);border:1px solid rgba(255,120,0,0.4);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;color:#FFD700;">
               🔥 ${streak} day streak
             </div>
-            ${streak < currentLevel * 7 ? `<div style="font-size:10px;color:var(--muted);">${currentLevel * 7 - streak} days to next</div>` : '<div style="font-size:10px;color:#22C55E;font-weight:700;">✓ Level complete!</div>'}
+            ${streak < currentLevel * 7 ? '<div style="font-size:10px;color:var(--muted);">' + (currentLevel * 7 - streak) + ' days to next</div>' : '<div style="font-size:10px;color:#22C55E;font-weight:700;">✓ Level complete!</div>'}
           </div>
         </div>
         <div style="text-align:right;flex-shrink:0;">
@@ -976,7 +980,11 @@ function renderFamilyRoadSummary() {
   const pct = nextArena ? Math.min((xpInto / arenaRange) * 100, 100) : 100;
 
   el.innerHTML = `
-    <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.6px;margin-bottom:10px;">FAMILY ROAD</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+      <div style="width:3px;height:20px;background:#E9A825;border-radius:2px;flex-shrink:0;"></div>
+      <div style="font-family:'Lexend',sans-serif;font-size:16px;font-weight:800;color:#E9A825;letter-spacing:0.3px;">Family Road</div>
+      <div style="margin-left:auto;font-size:10px;font-weight:600;color:rgba(233,168,37,0.6);letter-spacing:0.4px;">TOGETHER</div>
+    </div>
     <div style="display:flex;align-items:center;gap:14px;">
       <div style="font-size:48px;flex-shrink:0;filter:drop-shadow(0 0 14px ${current.color});">${current.icon}</div>
       <div style="flex:1;">
@@ -986,7 +994,7 @@ function renderFamilyRoadSummary() {
           <div style="background:${current.color}22;border:1px solid ${current.color}55;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;color:${current.color};">
             ${totalXP.toLocaleString()} XP
           </div>
-          ${nextArena ? `<div style="font-size:10px;color:var(--muted);">${xpToNext.toLocaleString()} to next</div>` : '<div style="font-size:10px;color:#22C55E;font-weight:700;">🏆 Max Arena!</div>'}
+          ${nextArena ? '<div style="font-size:10px;color:var(--muted);">' + xpToNext.toLocaleString() + ' to next</div>' : '<div style="font-size:10px;color:#22C55E;font-weight:700;">🏆 Max Arena!</div>'}
         </div>
       </div>
       <div style="text-align:right;flex-shrink:0;">
