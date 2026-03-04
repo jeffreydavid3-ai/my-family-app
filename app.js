@@ -1067,124 +1067,134 @@ async function wipeAllGoals() {
 }
 
 function renderTrophyRoad(streak, currentLevel) {
-  // Build the Clash Royale-style stacked steps path
-  const html = trophyLevels.slice().reverse().map((lvl, revIdx) => {
-    const lvlNum = trophyLevels.length - revIdx;
-    const realLvl = trophyLevels[lvlNum - 1];
-    const levelStartDay = (lvlNum - 1) * 7;
+  // Road is rendered bottom=level1 → top=level8 (higher = further ahead)
+  // So we render levels 1..8 in order (not reversed), matching a road you walk UP
+  const html = trophyLevels.map((realLvl, idx) => {
+    const lvlNum = idx + 1;
+    const levelStartDay = lvlNum * 7;       // streak needed to COMPLETE this level
+    const levelEntryDay = (lvlNum - 1) * 7; // streak at start of this level
     const isCurrentLevel = lvlNum === currentLevel;
     const isCompleted = streak >= lvlNum * 7;
-    const isLocked = streak < levelStartDay;
+    const isLocked = streak < levelEntryDay;
 
-    // Determine which streak bonus applies at this level's streak threshold
-    const lvlStreakMin = levelStartDay + 1; // first day of this level = streak value
+    const lvlStreakMin = levelEntryDay + 1;
     const bonus = getStreakBonus(lvlStreakMin);
 
-    const stepsHtml = Array.from({length:7}, (_,i) => {
-      const stepDay = levelStartDay + i + 1;
+    // Steps rendered bottom-first (step 1 at bottom, step 7 at top)
+    const stepsHtml = Array.from({length:7}, (_, i) => {
+      const stepDay = levelEntryDay + i + 1;
       const isDone = streak >= stepDay;
       const isCurrent = stepDay === streak + 1;
       return `
-        <div style="
+        <div id="${isCurrent ? 'my-road-current-step' : ''}" style="
           display:flex; align-items:center; justify-content:center;
           background:${isDone ? realLvl.color : isLocked ? '#0A1020' : '#0F1C30'};
           border-left:3px solid ${realLvl.color}88;
           border-right:3px solid ${realLvl.color}88;
-          padding:8px 0;
-          position:relative;
-          transition:all 0.3s;
-          ${isCurrent ? `box-shadow:inset 0 0 12px ${realLvl.color}66;` : ''}
+          padding:8px 0; position:relative; transition:all 0.3s;
+          ${isCurrent ? 'box-shadow:inset 0 0 14px rgba(255,180,0,0.5);' : ''}
         ">
-          <div style="position:absolute;left:14px;opacity:${isLocked?0.2:0.7};font-size:13px;">👑</div>
-          <div style="font-size:13px;font-weight:700;color:${isDone?'rgba(255,255,255,0.9)':isLocked?'rgba(255,255,255,0.15)':'rgba(255,255,255,0.5)'};">${stepDay <= 49 ? stepDay : ''}</div>
-          <div style="position:absolute;right:14px;opacity:${isLocked?0.2:0.7};font-size:13px;">👑</div>
-          ${isCurrent ? `<div style="position:absolute;right:-2px;font-size:10px;background:var(--gold);color:#000;border-radius:8px;padding:1px 5px;font-weight:700;">YOU</div>` : ''}
+          <div style="position:absolute;left:14px;opacity:${isLocked?0.2:0.7};font-size:13px;">🔥</div>
+          <div style="font-size:13px;font-weight:700;color:${isDone?'rgba(255,255,255,0.9)':isLocked?'rgba(255,255,255,0.15)':'rgba(255,255,255,0.5)'};">${stepDay <= 56 ? stepDay : ''}</div>
+          <div style="position:absolute;right:14px;opacity:${isLocked?0.2:0.7};font-size:13px;">🔥</div>
+          ${isCurrent ? '<div style="position:absolute;right:-2px;font-size:10px;background:var(--gold);color:#000;border-radius:8px;padding:1px 5px;font-weight:700;z-index:2;">YOU</div>' : ''}
         </div>
       `;
-    }).reverse().join('');
+    }).join(''); // step 1 first = at bottom naturally since we flex-col
 
     const opacity = isLocked ? 0.35 : 1;
 
     return `
-      <div style="opacity:${opacity};margin-bottom:0;">
+      <div style="opacity:${opacity};margin-bottom:0;" ${isCurrentLevel ? 'id="my-road-current-level"' : ''}>
+        <div style="height:3px;background:linear-gradient(90deg,transparent,${realLvl.color}88,transparent);"></div>
+        <div>${stepsHtml}</div>
         <div style="
           background:${isCompleted ? realLvl.bg : isCurrentLevel ? realLvl.bg : 'linear-gradient(135deg,#111827,#1F2E4A)'};
-          padding:14px 20px;
-          display:flex; align-items:center; justify-content:space-between;
-          border-top:2px solid ${realLvl.color}55;
-          ${isCurrentLevel ? `box-shadow:0 0 20px ${realLvl.color}44;` : ''}
+          padding:14px 20px; display:flex; align-items:center; justify-content:space-between;
+          border-bottom:2px solid ${realLvl.color}55;
+          ${isCurrentLevel ? 'box-shadow:0 0 20px ' + realLvl.color + '44;' : ''}
         ">
-          <!-- Left: level number + XP bonus pill -->
           <div style="display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:52px;">
             <div style="font-size:10px;font-weight:700;color:${realLvl.color};letter-spacing:0.5px;opacity:0.8;">LEVEL ${lvlNum}</div>
             <div style="background:${bonus.color}22;border:1px solid ${bonus.color}55;border-radius:8px;padding:2px 7px;font-size:10px;font-weight:700;color:${bonus.color};white-space:nowrap;">
               ⚡ ${bonus.label} XP
             </div>
           </div>
-          <!-- Center: badge + name -->
           <div style="text-align:center;">
             <div>${getLevelBadgeSVG(lvlNum)}</div>
             <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.8);margin-top:2px;letter-spacing:0.3px;">${realLvl.name}</div>
           </div>
-          <!-- Right: progress/status -->
           <div style="font-size:11px;color:rgba(255,255,255,0.5);text-align:right;min-width:52px;">
-            ${isCompleted ? '<span style="color:#22C55E;font-weight:700;">✓ Done</span>' : isCurrentLevel ? `<span style="color:var(--gold);font-weight:700;">${streak - levelStartDay}/7</span>` : isLocked ? '🔒' : ''}
+            ${isCompleted ? '<span style="color:#22C55E;font-weight:700;">✓ Done</span>' : isCurrentLevel ? '<span style="color:var(--gold);font-weight:700;">' + (streak - levelEntryDay) + '/7</span>' : isLocked ? '🔒' : ''}
           </div>
         </div>
-        <div>${stepsHtml}</div>
-        <div style="height:3px;background:linear-gradient(90deg,transparent,${realLvl.color}88,transparent);"></div>
       </div>
     `;
-  }).join('');
+  }).reverse().join(''); // reverse so level 8 is at top, level 1 at bottom
 
   document.getElementById('trophy-road-content').innerHTML = `
-    <div style="background:var(--bg);border-radius:0 0 12px 12px;overflow:hidden;">
+    <div style="background:var(--bg);border-radius:12px;overflow:hidden;margin-bottom:14px;">
       ${html}
     </div>
   `;
 
+  // Scroll so current level is visible near top of viewport
+  requestAnimationFrame(() => {
+    const target = document.getElementById('my-road-current-level') ||
+                   document.getElementById('my-road-current-step');
+    if (target) {
+      const main = document.querySelector('.main');
+      if (main) {
+        const offset = target.getBoundingClientRect().top - main.getBoundingClientRect().top + main.scrollTop - 80;
+        main.scrollTo({ top: offset, behavior: 'smooth' });
+      }
+    }
+  });
 }
 
 function renderFamilyArena() {
   const el = document.getElementById('family-arena-section');
   if (!el) return;
 
-  const totalXP = getFamilyTotalXP();
-  const current = getFamilyArena(totalXP);
+  const totalXP   = getFamilyTotalXP();
+  const current   = getFamilyArena(totalXP);
   const nextArena = familyArenas.find(a => a.arena === current.arena + 1);
   const xpIntoArena = totalXP - current.minXP;
-  const arenaRange = nextArena ? (current.maxXP - current.minXP + 1) : 1;
+  const arenaRange  = nextArena ? (current.maxXP - current.minXP + 1) : 1;
   const progressPct = nextArena ? Math.min((xpIntoArena / arenaRange) * 100, 100) : 100;
-  const xpToNext = nextArena ? (nextArena.minXP - totalXP) : 0;
+  const xpToNext    = nextArena ? (nextArena.minXP - totalXP) : 0;
 
-  const arenaTilesHtml = familyArenas.map(a => {
+  // Render arena 1 at bottom → arena 8 at top
+  // We build 1..8 then reverse for display
+  const arenaTilesHtml = familyArenas.slice().reverse().map(a => {
     const isActive = a.arena === current.arena;
     const isPast   = a.arena < current.arena;
     return `
-      <div style="
-        display:flex; align-items:center; gap:10px; padding:10px 14px;
-        background:${isActive ? a.bg : isPast ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.2)'};
-        border-radius:12px; margin-bottom:6px;
-        border:1px solid ${isActive ? a.color + '66' : 'transparent'};
-        ${isActive ? `box-shadow:0 0 16px ${a.color}33;` : ''}
-        opacity:${isPast ? 0.7 : 1};
-        transition: all 0.2s;
+      <div ${isActive ? 'id="family-road-current-arena"' : ''} style="
+        display:flex; align-items:center; gap:12px; padding:13px 16px;
+        background:${isActive ? a.bg : isPast ? 'rgba(34,197,94,0.06)' : 'rgba(0,0,0,0.2)'};
+        border-radius:14px; margin-bottom:6px;
+        border:1.5px solid ${isActive ? a.color + '88' : isPast ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.06)'};
+        ${isActive ? 'box-shadow:0 0 20px ' + a.color + '33;' : ''}
+        opacity:${isPast ? 0.75 : isActive ? 1 : 0.5};
+        transition:all 0.2s;
       ">
-        <div style="font-size:${isActive ? '26px' : '18px'};flex-shrink:0;filter:${isActive ? `drop-shadow(0 0 6px ${a.color})` : 'none'};">${a.icon}</div>
-        <div style="flex:1;">
-          <div style="display:flex;align-items:center;gap:6px;">
+        <div style="font-size:${isActive ? '28px' : '20px'};flex-shrink:0;filter:${isActive ? 'drop-shadow(0 0 8px ' + a.color + ')' : 'none'};">${a.icon}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:1px;">
             <span style="font-size:10px;font-weight:700;color:${a.color};letter-spacing:0.4px;">ARENA ${a.arena}</span>
-            ${isActive ? `<span style="background:${a.color};color:#000;border-radius:6px;padding:1px 6px;font-size:9px;font-weight:800;">CURRENT</span>` : ''}
-            ${isPast ? `<span style="color:#22C55E;font-size:10px;">✓</span>` : ''}
+            ${isActive ? '<span style="background:' + a.color + ';color:#000;border-radius:6px;padding:1px 7px;font-size:9px;font-weight:800;">YOU ARE HERE</span>' : ''}
+            ${isPast ? '<span style="color:#22C55E;font-size:11px;font-weight:700;">✓</span>' : ''}
+            ${!isActive && !isPast ? '<span style="color:rgba(255,255,255,0.3);font-size:10px;">🔒</span>' : ''}
           </div>
-          <div style="font-family:'Lexend',sans-serif;font-size:13px;font-weight:700;color:${isActive ? 'white' : 'rgba(255,255,255,0.5)'};">${a.name}</div>
-          <div style="font-size:10px;color:rgba(255,255,255,0.4);">${a.minXP.toLocaleString()}${a.maxXP === Infinity ? '+ XP' : ' – ' + a.maxXP.toLocaleString() + ' XP'}</div>
+          <div style="font-family:'Lexend',sans-serif;font-size:${isActive ? '15px' : '13px'};font-weight:${isActive ? '800' : '600'};color:${isActive ? 'white' : isPast ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.3)'};">${a.name}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:1px;">${a.minXP.toLocaleString()}${a.maxXP === Infinity ? '+ XP' : ' – ' + a.maxXP.toLocaleString() + ' XP'}</div>
         </div>
         ${isActive && nextArena ? `
           <div style="text-align:right;flex-shrink:0;">
-            <div style="font-size:10px;color:rgba(255,255,255,0.5);margin-bottom:4px;">${xpToNext.toLocaleString()} XP to go</div>
-            <div style="width:60px;height:5px;background:rgba(255,255,255,0.1);border-radius:100px;overflow:hidden;">
-              <div style="width:${progressPct}%;height:100%;background:${a.color};border-radius:100px;transition:width 1s ease;"></div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.5);margin-bottom:5px;">${xpToNext.toLocaleString()} XP to go</div>
+            <div style="width:56px;height:5px;background:rgba(255,255,255,0.1);border-radius:100px;overflow:hidden;">
+              <div style="width:${progressPct}%;height:100%;background:${a.color};border-radius:100px;"></div>
             </div>
           </div>
         ` : ''}
@@ -1194,37 +1204,21 @@ function renderFamilyArena() {
 
   el.innerHTML = `
     <div class="card" style="margin-bottom:14px;">
-      <!-- Current arena hero -->
-      <div style="background:${current.bg};border-radius:14px;padding:16px;margin-bottom:14px;border:1px solid ${current.color}44;box-shadow:0 0 24px ${current.color}22;">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-          <div style="font-size:36px;filter:drop-shadow(0 0 10px ${current.color});">${current.icon}</div>
-          <div>
-            <div style="font-size:10px;font-weight:700;color:${current.color};letter-spacing:0.5px;">CURRENT ARENA</div>
-            <div style="font-family:'Lexend',sans-serif;font-size:20px;font-weight:800;color:white;">${current.name}</div>
-          </div>
-          <div style="margin-left:auto;text-align:right;">
-            <div style="font-family:'Lexend',sans-serif;font-size:26px;font-weight:800;color:${current.color};line-height:1;">${totalXP.toLocaleString()}</div>
-            <div style="font-size:10px;color:rgba(255,255,255,0.5);font-weight:600;">FAMILY XP</div>
-          </div>
-        </div>
-        ${nextArena ? `
-          <div>
-            <div style="display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.6);margin-bottom:5px;">
-              <span>Progress to ${nextArena.name}</span>
-              <span>${xpToNext.toLocaleString()} XP needed</span>
-            </div>
-            <div style="background:rgba(0,0,0,0.3);border-radius:100px;height:8px;overflow:hidden;">
-              <div style="width:${progressPct}%;height:100%;background:linear-gradient(90deg,${current.color}88,${current.color});border-radius:100px;transition:width 1.2s ease;box-shadow:0 0 8px ${current.color};"></div>
-            </div>
-          </div>
-        ` : `<div style="text-align:center;font-size:12px;font-weight:700;color:${current.color};">🏆 Maximum Arena Reached!</div>`}
-      </div>
-
-      <!-- All arena tiers -->
-      <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:0.5px;margin-bottom:8px;">ALL ARENAS</div>
       ${arenaTilesHtml}
     </div>
   `;
+
+  // Scroll so current arena is visible near top of viewport
+  requestAnimationFrame(() => {
+    const target = document.getElementById('family-road-current-arena');
+    if (target) {
+      const main = document.querySelector('.main');
+      if (main) {
+        const offset = target.getBoundingClientRect().top - main.getBoundingClientRect().top + main.scrollTop - 80;
+        main.scrollTo({ top: offset, behavior: 'smooth' });
+      }
+    }
+  });
 }
 
 function toggleSection(id) {
