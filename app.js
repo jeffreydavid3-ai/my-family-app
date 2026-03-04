@@ -628,7 +628,7 @@ function renderTracker(){
         ` : ''}
         <div class="check-btn ${doneToday ? 'done' : ''}" onclick="${canToggle ? `toggleGoal('${g.id}')` : ''}" ${!canToggle ? 'style="opacity:0.3;cursor:default;"' : ''}>${doneToday ? '✓' : ''}</div>
       </div>
-    \`;
+    `;
   }).join('') || '<div style="text-align:center;color:var(--muted);padding:32px;font-size:13px;">No goals yet — tap ＋ Add New Goal below!</div>';
 }
 
@@ -680,9 +680,9 @@ async function toggleGoal(id){
 }
 
 function checkCelebration(g){
-  if(g.streak===7){showModal('🔥','7-Day Streak!',`"${g.name}" — keep that fire going!`);launchConfetti();}
-  else if(goals.filter(g => g.member === loggedInUser || g.member === 'All').every(g => isDoneToday(g))){showModal('🎉','Perfect Day!','All your goals are done today!');launchConfetti();}
-  else if(Math.random()<0.15){showModal('✅','Goal Complete!',`Nice work on "${g.name}"!`);}
+  if(g.streak===7){ showModal('7-Day Streak!', '7-Day Streak!', '"'+ g.name +'" — keep that fire going!'); launchConfetti(); }
+  else if(goals.filter(function(x){ return x.member === loggedInUser || x.member === 'All'; }).every(function(x){ return isDoneToday(x); })){ showModal('Perfect Day!', 'Perfect Day!', 'All your goals are done today!'); launchConfetti(); }
+  else if(Math.random() < 0.15){ showModal('Goal Complete!', 'Goal Complete!', 'Nice work on "' + g.name + '"!'); }
 }
 
 // ── ADD GOAL ──
@@ -690,7 +690,7 @@ function renderAddForm(){
   const notice=document.getElementById('add-lock-notice');
   if (notice) {
     notice.style.display='block';
-    notice.innerHTML=`🔒 Adding as <strong>${loggedInUser}</strong>. Goals are assigned to you only.`;
+    notice.innerHTML='<span>🔒</span> Adding as <strong>' + loggedInUser + '</strong>. Goals are assigned to you only.';
   }
   // No "All" option — goals only assigned to the logged-in user
   selectedMembers = new Set([loggedInUser]);
@@ -899,7 +899,7 @@ function renderProfile() {
   document.getElementById('profile-name').textContent = `${m.emoji} ${loggedInUser}`;
   document.getElementById('profile-trophy-icon').innerHTML = getLevelBadgeSVG(currentLevel);
   document.getElementById('profile-level-name').textContent = `Level ${currentLevel} · ${levelInfo.name}`;
-  document.getElementById('profile-streak-line').textContent = `🔥 ${streak} day streak`;
+  document.getElementById('profile-streak-line').textContent = '🔥 ' + streak + ' day streak';
 
   renderTrophyRoad(streak, currentLevel);
 }
