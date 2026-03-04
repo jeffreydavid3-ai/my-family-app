@@ -20,6 +20,22 @@ function logSupabaseError(label, error) {
 }
 
 // ── SUPABASE: LOAD + SAVE GOALS ──
+// ── MOUNTAIN TIME HELPERS ──
+function getTodayMountainDate() {
+  // Returns today's date as YYYY-MM-DD in America/Denver timezone
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Denver',
+    year: 'numeric', month: '2-digit', day: '2-digit'
+  }).format(new Date());
+}
+
+function isDoneToday(goal) {
+  // A goal counts as completed only if its completionDate matches today (Mountain Time)
+  if (!goal.done) return false;
+  if (!goal.completionDate) return false;
+  return goal.completionDate === getTodayMountainDate();
+}
+
 async function loadGoalsFromSupabase() {
   if (!supabaseClient) return;
 
@@ -33,22 +49,30 @@ async function loadGoalsFromSupabase() {
     return;
   }
 
-  // Filter out goals that existed before a reset (in case Supabase delete was blocked by RLS)
+  // Filter out goals that existed before a wipe reset
   const resetAt = localStorage.getItem('goals_reset_at');
   const rows = (data || []).filter(row => {
     if (!resetAt) return true;
     return new Date(row.created_at) > new Date(resetAt);
   });
 
-  goals = rows.map(row => ({
-    id: row.id,
-    name: row.title,
-    member: row.member,
-    done: row.completed,
-    cat: row.cat || "fitness",
-    freq: row.freq || "daily",
-    streak: row.streak || 0
-  }));
+  const today = getTodayMountainDate();
+
+  goals = rows.map(row => {
+    const completionDate = row.completion_date || null;
+    // Daily reset: only mark done if completed today (Mountain Time)
+    const doneToday = row.completed && completionDate === today;
+    return {
+      id:             row.id,
+      name:           row.title,
+      member:         row.member,
+      done:           doneToday,
+      cat:            row.cat  || 'fitness',
+      freq:           row.freq || 'daily',
+      streak:         row.streak || 0,
+      completionDate: completionDate,
+    };
+  });
 }
 
 async function insertGoalToSupabase(goal) {
@@ -57,12 +81,13 @@ async function insertGoalToSupabase(goal) {
   const { data, error } = await supabaseClient
     .from("goals")
     .insert([{
-      title: goal.name,
-      member: goal.member,
-      completed: goal.done,
-      cat: goal.cat,
-      freq: goal.freq,
-      streak: goal.streak
+      title:           goal.name,
+      member:          goal.member,
+      completed:       goal.done,
+      cat:             goal.cat,
+      freq:            goal.freq,
+      streak:          goal.streak,
+      completion_date: goal.done ? getTodayMountainDate() : null,
     }])
     .select()
     .single();
@@ -86,8 +111,9 @@ async function updateGoalInSupabase(goal) {
   const { error } = await supabaseClient
     .from("goals")
     .update({
-      completed: goal.done,
-      streak: goal.streak
+      completed:       goal.done,
+      streak:          goal.streak,
+      completion_date: goal.done ? (goal.completionDate || getTodayMountainDate()) : null,
     })
     .eq("id", goal.id);
 
@@ -582,7 +608,7 @@ function renderTracker(){
   const filtered = goals.filter(g =>
     g.member === planViewMember || g.member === 'All'
   );
-  const done = filtered.filter(g => g.done).length;
+  const done = filtered.filter(g => isDoneToday(g)).length;
   const isViewingOwn = planViewMember === loggedInUser;
   const summaryEl = document.getElementById('tracker-summary');
   if (summaryEl) summaryEl.textContent = `${done}/${filtered.length} completed today${!isViewingOwn ? ' · Viewing ' + planViewMember + "'s plan" : ''}`;
@@ -590,18 +616,19 @@ function renderTracker(){
   document.getElementById('goal-list').innerHTML = filtered.map(g => {
     const canToggle = isViewingOwn;
     const canEdit   = isViewingOwn && g.member !== 'All';
+    const doneToday = isDoneToday(g);
     return `
-      <div class="goal-card ${g.done ? 'completed' : ''}" style="position:relative;">
+      <div class="goal-card ${doneToday ? 'completed' : ''}" style="position:relative;">
         <div style="flex:1;cursor:${canToggle?'pointer':'default'};" onclick="${canToggle ? `toggleGoal('${g.id}')` : ''}">
-          <div style="font-weight:600;font-size:13px;${g.done?'text-decoration:line-through;opacity:0.4;':''}">${g.name}</div>
+          <div style="font-weight:600;font-size:13px;${doneToday?'text-decoration:line-through;opacity:0.4;':''}">${g.name}</div>
           <div style="font-size:10px;color:var(--muted);margin-top:2px;">${ci[g.cat]} ${g.cat.charAt(0).toUpperCase()+g.cat.slice(1)} · ${g.freq}</div>
         </div>
         ${canEdit ? `
           <button onclick="event.stopPropagation(); openEditForm('${g.id}')" style="background:rgba(74,174,217,0.15);border:1.5px solid rgba(74,174,217,0.4);border-radius:10px;padding:7px 13px;color:var(--blue);font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0;font-family:'Lexend',sans-serif;min-width:44px;min-height:36px;">✏️</button>
         ` : ''}
-        <div class="check-btn ${g.done ? 'done' : ''}" onclick="${canToggle ? `toggleGoal('${g.id}')` : ''}" ${!canToggle ? 'style="opacity:0.3;cursor:default;"' : ''}>${g.done ? '✓' : ''}</div>
+        <div class="check-btn ${doneToday ? 'done' : ''}" onclick="${canToggle ? `toggleGoal('${g.id}')` : ''}" ${!canToggle ? 'style="opacity:0.3;cursor:default;"' : ''}>${doneToday ? '✓' : ''}</div>
       </div>
-    `;
+    \`;
   }).join('') || '<div style="text-align:center;color:var(--muted);padding:32px;font-size:13px;">No goals yet — tap ＋ Add New Goal below!</div>';
 }
 
@@ -613,21 +640,48 @@ function memberColor(m){
 }
 
 async function toggleGoal(id){
-  const g = goals.find(g=> String(g.id) === String(id));
-  if(!g) return;
+  const g = goals.find(g => String(g.id) === String(id));
+  if (!g) return;
 
-  g.done = !g.done;
-  if(g.done){ g.streak++; checkCelebration(g); }
-  else { g.streak = Math.max(0, g.streak-1); }
+  const wasAlreadyDone = isDoneToday(g);
+  g.done = !wasAlreadyDone; // toggle based on today's status
+
+  if (g.done) {
+    // Completing a goal
+    g.completionDate = getTodayMountainDate();
+    g.streak++;
+
+    // Award +10 XP to the user permanently
+    if (!personalData[g.member]) personalData[g.member] = { xp:0, streak:0, bestStreak:0, goalsTotal:0, goalsDone:0, daysActive:0, successRate:0, badges:[] };
+    personalData[g.member].xp = (personalData[g.member].xp || 0) + 10;
+
+    // Also update leaderboard entry
+    const lb = leaderboardData.find(x => x.name === g.member);
+    if (lb) lb.xp += 10;
+
+    checkCelebration(g);
+  } else {
+    // Un-completing a goal — remove completionDate and reverse XP
+    g.completionDate = null;
+    g.streak = Math.max(0, g.streak - 1);
+
+    if (personalData[g.member]) {
+      personalData[g.member].xp = Math.max(0, (personalData[g.member].xp || 0) - 10);
+    }
+    const lb = leaderboardData.find(x => x.name === g.member);
+    if (lb) lb.xp = Math.max(0, lb.xp - 10);
+  }
 
   await updateGoalInSupabase(g);
 
   renderTracker();
+  renderPersonalDashboard();
+  renderLeaderboard();
 }
 
 function checkCelebration(g){
   if(g.streak===7){showModal('🔥','7-Day Streak!',`"${g.name}" — keep that fire going!`);launchConfetti();}
-  else if(goals.filter(g=>g.done).length===goals.length){showModal('🎉','Perfect Day!','All Johnson family goals complete!');launchConfetti();}
+  else if(goals.filter(g => g.member === loggedInUser || g.member === 'All').every(g => isDoneToday(g))){showModal('🎉','Perfect Day!','All your goals are done today!');launchConfetti();}
   else if(Math.random()<0.15){showModal('✅','Goal Complete!',`Nice work on "${g.name}"!`);}
 }
 
@@ -1153,13 +1207,18 @@ function renderPersonalDashboard(){
     </div>
   `;
 
+  // Compute today's real completion stats from live goals
+  const myGoalsForStats = goals.filter(g => g.member === activeMember || g.member === 'All');
+  const goalsDoneToday  = myGoalsForStats.filter(g => isDoneToday(g)).length;
+  const goalsTotalToday = myGoalsForStats.length;
+
   // Stats row: Today | Active Days | Badge Level (tappable → Rise Road)
-  const todaySub = d.goalsTotal === 0 ? 'No goals yet' : d.goalsDone === d.goalsTotal ? '🎉 Perfect!' : (d.goalsTotal - d.goalsDone) + ' left';
+  const todaySub = goalsTotalToday === 0 ? 'No goals yet' : goalsDoneToday === goalsTotalToday ? '🎉 Perfect!' : (goalsTotalToday - goalsDoneToday) + ' left';
   document.getElementById('personal-stats').innerHTML = `
     <div class="stat-card">
       <div class="stat-icon">✅</div>
       <div class="stat-label">Today</div>
-      <div class="stat-value">${d.goalsDone}/${d.goalsTotal}</div>
+      <div class="stat-value">${goalsDoneToday}/${goalsTotalToday}</div>
       <div class="stat-sub">${todaySub}</div>
     </div>
     <div class="stat-card">
@@ -1180,6 +1239,7 @@ function renderPersonalDashboard(){
   const myGoals = goals.filter(g => g.member === activeMember || g.member === 'All');
   document.getElementById('personal-streaks').innerHTML = myGoals.length ? `
     <div style="display:flex;flex-direction:column;gap:9px;">${myGoals.map(g => {
+      const doneInStreaks = isDoneToday(g);
       const fp = Math.min((g.streak || 0) * 10, 100);
       const fb = g.streak >= 7 ? 'rgba(233,168,37,0.15)' : g.streak >= 3 ? 'rgba(233,168,37,0.08)' : 'rgba(255,255,255,0.04)';
       const fc = g.streak >= 7 ? 'var(--gold)' : g.streak >= 3 ? '#D97706' : 'var(--muted)';
