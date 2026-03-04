@@ -447,7 +447,7 @@ function renderFamilyGoalList() {
         <div class="goal-card" style="opacity:0.85;">
           <div style="flex:1;">
             <div style="font-weight:600;font-size:13px;${g.done?'text-decoration:line-through;opacity:0.4;':''}">${g.name}</div>
-            <div style="font-size:10px;color:var(--muted);margin-top:2px;">${ci[g.cat]||''} ${g.cat} · ${g.freq}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px;">${g.freq}</div>
           </div>
           <div class="check-btn ${g.done?'done':''}" style="opacity:0.5;cursor:default;">${g.done?'✓':''}</div>
         </div>
@@ -621,7 +621,7 @@ function renderTracker(){
       <div class="goal-card ${doneToday ? 'completed' : ''}" style="position:relative;">
         <div style="flex:1;cursor:${canToggle?'pointer':'default'};" onclick="${canToggle ? `toggleGoal('${g.id}')` : ''}">
           <div style="font-weight:600;font-size:13px;${doneToday?'text-decoration:line-through;opacity:0.4;':''}">${g.name}</div>
-          <div style="font-size:10px;color:var(--muted);margin-top:2px;">${ci[g.cat]} ${g.cat.charAt(0).toUpperCase()+g.cat.slice(1)} · ${g.freq}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px;">${g.freq}</div>
         </div>
         ${canEdit ? `
           <button onclick="event.stopPropagation(); openEditForm('${g.id}')" style="background:rgba(74,174,217,0.15);border:1.5px solid rgba(74,174,217,0.4);border-radius:10px;padding:7px 13px;color:var(--blue);font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0;font-family:'Lexend',sans-serif;min-width:44px;min-height:36px;">✏️</button>
@@ -1244,7 +1244,7 @@ function renderPersonalDashboard(){
       const fb = g.streak >= 7 ? 'rgba(233,168,37,0.15)' : g.streak >= 3 ? 'rgba(233,168,37,0.08)' : 'rgba(255,255,255,0.04)';
       const fc = g.streak >= 7 ? 'var(--gold)' : g.streak >= 3 ? '#D97706' : 'var(--muted)';
       return `<div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:11px 13px;display:flex;align-items:center;gap:10px;">
-        <div style="font-size:18px;">${g.cat==='fitness'?'💪':g.cat==='finance'?'💰':'🙏'}</div>
+
         <div style="flex:1;min-width:0;">
           <div style="font-weight:600;font-size:12px;margin-bottom:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${g.name}</div>
           <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${fp}%;background:${color};"></div></div>
